@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kalendarz faktur — prototyp</title>
+<style>
+/* =========================================================
+   STYLE
+   ========================================================= */
+
+/* --- Tokeny z DESIGN.md (bez zmian) --- */
+:root {
+  /* kolory */
+  --color-primary: #191919;
+  --color-text: #2E2E2E;
+  --color-muted: #747474;
+  --color-border-strong: #D2D2D2;
+  --color-border: #D9D9D9;
+  --color-subtle: #E6E6E5;
+  --color-sand: #EFECE6;
+  --color-sand-dark: #DBD4C7;
+  --color-bg: #FFFFFF;
+  --color-bg-shade: #F5F5F5;
+  --color-black: #000000;
+  --color-stock: #0D5F00;
+  --color-success: #639C63;
+  --color-danger: #E74C40;
+  --color-warning: #FF9F0F;
+  --color-info: #00CBE6;
+  --color-selection: #DDD3CC;
+
+  /* typografia */
+  --font-primary: "Azeret", sans-serif;
+  --text-ratio: 1.125;
+  --text-base: 1rem;
+
+  /* layout */
+  --radius: 0;
+  --site-max-width: 1400px;
+  --header-height: 50px;
+  --spacing-unit: 1rem;
+
+  /* skala tekstu i odstępów z DESIGN.md */
+  --text-sm: 0.889rem;   /* 14.2px */
+  --text-md: 1rem;       /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.266rem;   /* 20.25px */
+  --text-xxl: 1.424rem;  /* 22.8px */
+  --text-xxxl: 1.602rem; /* 25.6px */
+  --spacing-xxs: 0.25rem;
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.25rem;
+  --spacing-xl: 1.5rem;
+  --spacing-xxxl: 2rem;
+  --spacing-xxxxl: 4rem;
+}
+
+/* --- Korekty dostępności (odstępstwa od DESIGN.md, opisane w podsumowaniu) --- */
+:root {
+  --a11y-muted: #5F5F5F;          /* zamiast #747474 na tłach innych niż białe */
+  --a11y-success-text: #3E6E3E;   /* zamiast #639C63 jako tekst */
+  --a11y-danger-text: #B3261E;    /* zamiast #E74C40 jako tekst / tło plakietki */
+  --a11y-warning-text: #8A5300;   /* zamiast #FF9F0F jako tekst */
+  --a11y-target: 44px;            /* zamiast 40px wysokości przycisku */
+  --font-stack: "Azeret", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+::selection { background: var(--color-selection); }
+
+html, body { margin: 0; }
+body {
+  font-family: var(--font-stack);
+  font-size: var(--text-md);
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3 { color: var(--color-primary); margin: 0; font-weight: 600; line-height: 1.25; }
+
+a { color: var(--color-primary); }
+
+:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+
+/* Nagłówek aplikacji */
+.app-header {
+  height: 64px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+}
+.app-header__inner, .page {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-xl);
+}
+.app-header__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-md); }
+.brand { display: flex; align-items: center; gap: var(--spacing-sm); font-size: var(--text-lg); font-weight: 600; color: var(--color-primary); text-decoration: none; min-height: var(--a11y-target); }
+.brand svg { flex: none; }
+.inbox-status { display: flex; align-items: center; gap: var(--spacing-xs); font-size: var(--text-md); color: var(--color-stock); }
+
+main { flex: 1; padding: var(--spacing-xxxl) 0 var(--spacing-xxxxl); }
+
+/* Przyciski */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-xs);
+  min-height: var(--a11y-target); min-width: var(--a11y-target);
+  padding: 0 var(--spacing-md);
+  font: inherit; font-size: var(--text-md); line-height: 1.2;
+  border-radius: var(--radius);
+  cursor: pointer; text-decoration: none;
+  transition: background-color .15s, color .15s, border-color .15s;
+}
+.btn--primary { background: var(--color-primary); color: #fff; border: 1px solid var(--color-primary); }
+.btn--primary:hover { background: #3A3A3A; border-color: #3A3A3A; }
+.btn--secondary { background: var(--color-bg); color: var(--color-primary); border: 1px solid var(--color-primary); }
+.btn--secondary:hover { background: var(--color-sand); }
+.btn--ghost { background: transparent; color: var(--color-primary); border: 1px solid transparent; text-decoration: underline; text-underline-offset: 3px; }
+.btn--ghost:hover { background: var(--color-sand); }
+.btn--icon { padding: 0; width: var(--a11y-target); background: var(--color-bg); border: 1px solid var(--color-border-strong); color: var(--color-primary); }
+.btn--icon:hover { background: var(--color-sand); }
+.btn:disabled, .btn[aria-disabled="true"] { background: var(--color-bg-shade); color: var(--a11y-muted); border-color: var(--color-border); cursor: not-allowed; }
+
+/* Plakietki */
+.badge { display: inline-block; padding: 2px 8px; font-size: var(--text-sm); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+.badge--danger { background: var(--a11y-danger-text); color: #fff; }
+.badge--neutral { background: var(--color-sand); color: var(--color-text); }
+
+/* --- Ekran: kalendarz --- */
+.cal-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--spacing-md); flex-wrap: wrap; margin-bottom: var(--spacing-xl); }
+.cal-head h1 { font-size: var(--text-xxxl); }
+.cal-head__nav { display: flex; gap: var(--spacing-xs); }
+.cal-summary { margin: var(--spacing-xs) 0 0; color: var(--color-text); }
+.cal-summary strong { color: var(--color-primary); }
+
+.calendar { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.calendar th { font-size: var(--text-sm); font-weight: 400; text-transform: uppercase; letter-spacing: .04em; text-align: left; padding: var(--spacing-xs) var(--spacing-sm); color: var(--color-text); border-bottom: 1px solid var(--color-border); }
+.calendar td { border: 1px solid var(--color-border); padding: 0; height: 112px; vertical-align: top; }
+.calendar td.is-empty { background: var(--color-bg-shade); }
+
+.day {
+  display: flex; flex-direction: column; align-items: stretch; gap: 4px;
+  width: 100%; height: 100%; min-height: 112px;
+  padding: var(--spacing-xs);
+  background: var(--color-bg); border: 0; border-radius: var(--radius);
+  font: inherit; color: var(--color-text); text-align: left; cursor: pointer; text-decoration: none;
+}
+.day:hover { background: var(--color-sand); }
+.day__num { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; font-size: var(--text-md); }
+.day.is-today .day__num { background: var(--color-primary); color: #fff; font-weight: 600; }
+.day.is-weekend .day__num { color: var(--a11y-muted); }
+.day.is-today.is-weekend .day__num { color: #fff; }
+.chip { display: block; padding: 2px 6px; font-size: var(--text-sm); line-height: 1.35; background: var(--color-sand); border-left: 3px solid var(--color-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip.is-overdue { border-left-color: var(--a11y-danger-text); background: #FBEAE8; }
+.chip--more { background: transparent; border-left-color: transparent; padding-left: 9px; text-decoration: underline; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+.legend { display: flex; flex-wrap: wrap; gap: var(--spacing-lg); margin-top: var(--spacing-md); font-size: var(--text-sm); }
+.legend span { display: inline-flex; align-items: center; gap: var(--spacing-xs); }
+.legend i { display: inline-block; width: 14px; height: 14px; background: var(--color-sand); border-left: 3px solid var(--color-primary); }
+.legend i.is-overdue { background: #FBEAE8; border-left-color: var(--a11y-danger-text); }
+.legend i.is-today { background: var(--color-primary); border: 0; }
+
+.banner { display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-md); margin-bottom: var(--spacing-xl); background: var(--color-sand); }
+.banner--success { color: var(--a11y-success-text); }
+
+/* --- Ekran: szczegóły dnia --- */
+.back { margin-left: calc(-1 * var(--spacing-md)); margin-bottom: var(--spacing-md); }
+.day-head h1 { font-size: var(--text-xxxl); }
+.day-head p { margin: var(--spacing-xs) 0 var(--spacing-xl); }
+
+.invoice-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--color-border); max-width: 760px; }
+.invoice { display: grid; grid-template-columns: 1fr auto; gap: var(--spacing-md) var(--spacing-xl); align-items: center; padding: var(--spacing-xl) 0; border-bottom: 1px solid var(--color-border); }
+.invoice__provider { font-size: var(--text-xl); font-weight: 600; color: var(--color-primary); display: flex; align-items: center; gap: var(--spacing-sm); flex-wrap: wrap; }
+.invoice__desc { margin: var(--spacing-xxs) 0; font-size: var(--text-md); }
+.invoice__from { margin: 0; font-size: var(--text-md); color: var(--a11y-muted); word-break: break-all; }
+.invoice__actions { display: flex; flex-direction: column; gap: var(--spacing-xs); align-items: stretch; }
+.invoice.is-leaving { opacity: .4; transition: opacity .2s; }
+
+.empty { max-width: 560px; padding: var(--spacing-xxxl); background: var(--color-sand); }
+.empty h2 { font-size: var(--text-xl); margin: var(--spacing-sm) 0 var(--spacing-xs); }
+.empty p { margin: 0 0 var(--spacing-lg); }
+
+.sample-note { margin-top: var(--spacing-xl); font-size: var(--text-sm); color: var(--a11y-muted); max-width: 760px; }
+
+/* --- Ekran: mapa --- */
+.map h1 { font-size: var(--text-xxxl); margin-bottom: var(--spacing-xs); }
+.map h2 { font-size: var(--text-xl); margin: var(--spacing-xxxl) 0 var(--spacing-sm); }
+.map ul, .map ol { padding-left: 1.25rem; }
+.map li { margin-bottom: var(--spacing-xs); }
+.map a { display: inline-block; min-height: 32px; }
+
+/* Komunikat (toast) */
+.toast {
+  position: fixed; left: 50%; bottom: var(--spacing-xl); transform: translateX(-50%);
+  display: flex; align-items: center; gap: var(--spacing-md);
+  max-width: calc(100% - 2rem);
+  padding: var(--spacing-xs) var(--spacing-xs) var(--spacing-xs) var(--spacing-lg);
+  background: var(--color-primary); color: #fff; z-index: 40;
+}
+.toast[hidden] { display: none; }
+.toast .btn { color: #fff; border-color: transparent; }
+.toast .btn:hover { background: #3A3A3A; }
+.toast .btn:focus-visible { outline-color: #fff; }
+
+/* Stopka */
+.footer { border-top: 1px solid var(--color-border); padding: var(--spacing-md) 0; font-size: var(--text-sm); color: var(--a11y-muted); }
+.footer .page { display: flex; justify-content: space-between; gap: var(--spacing-md); flex-wrap: wrap; }
+
+/* Responsywność: laptop jest platformą główną; na wąskich ekranach kalendarz się zagęszcza */
+@media (max-width: 720px) {
+  .app-header__inner, .page { padding: 0 var(--spacing-md); }
+  .calendar td, .day { height: 64px; min-height: 64px; }
+  .chip { display: none; }
+  .day.has-invoices::after { content: ""; display: block; width: 8px; height: 8px; background: var(--color-primary); }
+  .day.has-overdue::after { background: var(--a11y-danger-text); }
+  .invoice { grid-template-columns: 1fr; }
+  .inbox-status span { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-header__inner">
+    <a class="brand" href="#kalendarz">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      Kalendarz faktur
+    </a>
+    <div class="inbox-status" title="Połączona skrzynka pocztowa">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="14"/><path d="m3 6 9 7 9-7"/></svg>
+      <span id="inbox-label"></span>
+    </div>
+  </div>
+</header>
+
+<main id="app" tabindex="-1"></main>
+
+<footer class="footer">
+  <div class="page">
+    <span>Prototyp — dane fikcyjne</span>
+    <span>Faktury pobierane ze skrzynki są symulowane</span>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden>
+  <span id="toast-text"></span>
+  <button class="btn btn--ghost" id="toast-action" type="button" hidden>Cofnij</button>
+</div>
+
+<script>
+/* =========================================================
+   DANE PRZYKŁADOWE — tu możesz podmienić treści na własne
+   ========================================================= */
+const DANE = {
+  skrzynka: 'jan.przykladowy@poczta.example',
+  dzis: { rok: 2026, miesiac: 11, dzien: 10 },   // miesiąc: 1–12
+  faktury: [
+    { id: 1, dzien: 5,  dostawca: 'Falanet',            email: 'faktury@falanet.example',            opis: 'Faktura za internet – listopad 2026, 79,99 zł' },
+    { id: 2, dzien: 8,  dostawca: 'Mobilia',            email: 'e-faktura@mobilia.example',          opis: 'Abonament za telefon komórkowy – październik 2026, 49,00 zł' },
+    { id: 3, dzien: 12, dostawca: 'Volta Energia',      email: 'rozliczenia@voltaenergia.example',   opis: 'Prąd – prognoza na listopad 2026, 186,40 zł' },
+    { id: 4, dzien: 12, dostawca: 'AquaMiasto',         email: 'bok@aquamiasto.example',             opis: 'Woda i ścieki – październik 2026, 92,15 zł' },
+    { id: 5, dzien: 16, dostawca: 'Gazovia',            email: 'faktury@gazovia.example',            opis: 'Gaz – rozliczenie za wrzesień i październik 2026, 214,70 zł' },
+    { id: 6, dzien: 20, dostawca: 'Domostrefa Ubezpieczenia', email: 'polisy@domostrefa.example',    opis: 'Rata ubezpieczenia mieszkania – IV kwartał 2026, 63,00 zł' },
+    { id: 7, dzien: 25, dostawca: 'Osiedle Pod Lipami', email: 'administracja@podlipami.example',    opis: 'Opłata eksploatacyjna za mieszkanie – grudzień 2026, 412,30 zł' },
+    { id: 8, dzien: 25, dostawca: 'Lingwista',          email: 'faktury@lingwista.example',          opis: 'Kurs angielskiego online – grudzień 2026, 120,00 zł' },
+    { id: 9, dzien: 28, dostawca: 'Serwerownia',        email: 'billing@serwerownia.example',        opis: 'Domena i hosting – odnowienie na rok, 249,00 zł' }
+  ],
+  scenariusze: [
+    'A. Opłać fakturę: kalendarz → dzień z fakturami → oznacz jedną jako opłaconą → wróć do kalendarza i sprawdź, że jej nie ma.',
+    'B. Znajdź konkretną fakturę: w kalendarzu odszukaj fakturę za prąd i sprawdź, kto ją przysłał i na jaką kwotę.',
+    'C. Dzień bez faktur: kliknij dzień bez oznaczeń → zobacz komunikat → wróć do kalendarza.'
+  ],
+  teksty: {
+    pozaZakresem: 'Ta funkcja nie jest częścią prototypu.',
+    oplacona: 'Faktura oznaczona jako opłacona.',
+    przywrocona: 'Przywrócono fakturę do opłacenia.'
+  }
+};
+
+/* =========================================================
+   STAN (tylko w pamięci strony — odświeżenie = reset)
+   ========================================================= */
+const stan = {
+  oplacone: new Set(),   // id opłaconych faktur
+  ostatnioOplacona: null
+};
+
+/* Pomocnicze */
+const MIESIACE = ['styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec','sierpień','wrzesień','październik','listopad','grudzień'];
+const MIESIACE_DOP = ['stycznia','lutego','marca','kwietnia','maja','czerwca','lipca','sierpnia','września','października','listopada','grudnia'];
+const DNI_TYG = ['niedziela','poniedziałek','wtorek','środa','czwartek','piątek','sobota'];
+const DNI_KROTKO = ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'];
+const DNI_DLUGO = ['poniedziałek','wtorek','środa','czwartek','piątek','sobota','niedziela'];
+
+const { rok, miesiac, dzien: dzisDzien } = DANE.dzis;
+const liczbaDni = new Date(rok, miesiac, 0).getDate();
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nieoplacone = () => DANE.faktury.filter(f => !stan.oplacone.has(f.id));
+const fakturyDnia = d => nieoplacone().filter(f => f.dzien === d);
+const poTerminie = f => f.dzien < dzisDzien;
+const odmianaFaktur = n => n === 1 ? 'faktura' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? 'faktury' : 'faktur';
+const nazwaDnia = d => {
+  const data = new Date(rok, miesiac - 1, d);
+  const t = DNI_TYG[data.getDay()];
+  return t.charAt(0).toUpperCase() + t.slice(1) + ', ' + d + ' ' + MIESIACE_DOP[miesiac - 1] + ' ' + rok;
+};
+
+const IKONY = {
+  wstecz: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+  dalej: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
+  ok: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  mail: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="14"/><path d="m3 6 9 7 9-7"/></svg>',
+  pusto: '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4M9 15.5l2 2 4-4"/></svg>'
+};
+
+/* =========================================================
+   EKRANY
+   ========================================================= */
+
+/* Ekran 1 / 3: Kalendarz miesięczny */
+function ekranKalendarz() {
+  const lista = nieoplacone();
+  const poTerm = lista.filter(poTerminie).length;
+  const pierwszyDzienTyg = (new Date(rok, miesiac - 1, 1).getDay() + 6) % 7; // 0 = poniedziałek
+
+  let komorki = [];
+  for (let i = 0; i < pierwszyDzienTyg; i++) komorki.push('<td class="is-empty"></td>');
+  for (let d = 1; d <= liczbaDni; d++) {
+    const fakt = fakturyDnia(d);
+    const dzienTyg = (pierwszyDzienTyg + d - 1) % 7;
+    const klasy = ['day'];
+    if (d === dzisDzien) klasy.push('is-today');
+    if (dzienTyg >= 5) klasy.push('is-weekend');
+    if (fakt.length) klasy.push('has-invoices');
+    if (fakt.some(poTerminie)) klasy.push('has-overdue');
+
+    const chipy = fakt.slice(0, 2).map(f =>
+      `<span class="chip${poTerminie(f) ? ' is-overdue' : ''}">${esc(f.dostawca)}</span>`).join('') +
+      (fakt.length > 2 ? `<span class="chip chip--more">+${fakt.length - 2} więcej</span>` : '');
+
+    const opisSr = `${d} ${MIESIACE_DOP[miesiac - 1]}${d === dzisDzien ? ', dzisiaj' : ''}: ` +
+      (fakt.length ? `${fakt.length} ${odmianaFaktur(fakt.length)} do opłacenia${fakt.some(poTerminie) ? ', po terminie' : ''}` : 'brak faktur');
+
+    komorki.push(`<td><a class="${klasy.join(' ')}" href="#dzien-${d}" aria-label="${opisSr}">
+      <span class="day__num">${d}</span>${chipy}</a></td>`);
+  }
+  while (komorki.length % 7) komorki.push('<td class="is-empty"></td>');
+
+  let wiersze = '';
+  for (let i = 0; i < komorki.length; i += 7) wiersze += '<tr>' + komorki.slice(i, i + 7).join('') + '</tr>';
+
+  const podsumowanie = lista.length
+    ? `Do opłacenia: <strong>${lista.length} ${odmianaFaktur(lista.length)}</strong>` +
+      (poTerm ? ` · <span style="color:var(--a11y-danger-text)">${poTerm} po terminie</span>` : '') +
+      (stan.oplacone.size ? ` · Opłacone w tym miesiącu: ${stan.oplacone.size}` : '')
+    : `Opłacone w tym miesiącu: ${stan.oplacone.size}`;
+
+  return `
+  <div class="page">
+    ${lista.length ? '' : `<div class="banner banner--success" role="status">${IKONY.ok}<strong>Wszystko opłacone. W tym miesiącu nie masz już faktur do zapłaty.</strong></div>`}
+    <div class="cal-head">
+      <div>
+        <h1 tabindex="-1">${MIESIACE[miesiac - 1].charAt(0).toUpperCase() + MIESIACE[miesiac - 1].slice(1)} ${rok}</h1>
+        <p class="cal-summary">${podsumowanie}</p>
+      </div>
+      <div class="cal-head__nav">
+        <button class="btn btn--icon" type="button" data-poza-zakresem aria-label="Poprzedni miesiąc">${IKONY.wstecz}</button>
+        <button class="btn btn--icon" type="button" data-poza-zakresem aria-label="Następny miesiąc">${IKONY.dalej}</button>
+      </div>
+    </div>
+    <table class="calendar">
+      <caption class="sr-only">Faktury do opłacenia według terminu płatności. Kliknij dzień, aby zobaczyć szczegóły.</caption>
+      <thead><tr>${DNI_KROTKO.map((d, i) => `<th scope="col"><abbr title="${DNI_DLUGO[i]}" style="text-decoration:none">${d}</abbr></th>`).join('')}</tr></thead>
+      <tbody>${wiersze}</tbody>
+    </table>
+    <div class="legend" aria-hidden="true">
+      <span><i class="is-today"></i>Dzisiaj</span>
+      <span><i></i>Faktura do opłacenia (termin płatności)</span>
+      <span><i class="is-overdue"></i>Po terminie</span>
+    </div>
+  </div>`;
+}
+
+/* Ekran 2: Szczegóły dnia */
+function ekranDzien(d) {
+  const fakt = fakturyDnia(d);
+  const ileWszystkich = DANE.faktury.filter(f => f.dzien === d).length;
+  let tresc;
+
+  if (fakt.length) {
+    tresc = `
+      <ul class="invoice-list">
+        ${fakt.map(f => `
+        <li class="invoice" data-id="${f.id}">
+          <div>
+            <div class="invoice__provider">${esc(f.dostawca)}${poTerminie(f) ? '<span class="badge badge--danger">Po terminie</span>' : ''}</div>
+            <p class="invoice__desc">${esc(f.opis)}</p>
+            <p class="invoice__from">Od: ${esc(f.email)}</p>
+          </div>
+          <div class="invoice__actions">
+            <button class="btn btn--primary" type="button" data-oplac="${f.id}">${IKONY.ok}Oznacz jako opłaconą</button>
+            <button class="btn btn--ghost" type="button" data-poza-zakresem>${IKONY.mail}Pokaż maila</button>
+          </div>
+        </li>`).join('')}
+      </ul>`;
+  } else if (ileWszystkich) {
+    tresc = `
+      <div class="empty" role="status">
+        ${IKONY.pusto}
+        <h2>Wszystkie faktury z tego dnia są opłacone</h2>
+        <p>Nie znikły — po prostu nie musisz już o nich pamiętać.</p>
+        <a class="btn btn--primary" href="#kalendarz">Wróć do kalendarza</a>
+      </div>`;
+  } else {
+    tresc = `
+      <div class="empty">
+        ${IKONY.pusto}
+        <h2>Brak faktur do opłacenia w tym dniu</h2>
+        <p>Nie przyszedł żaden mail z fakturą z terminem płatności na ten dzień.</p>
+        <a class="btn btn--primary" href="#kalendarz">Wróć do kalendarza</a>
+      </div>`;
+  }
+
+  const podtytul = fakt.length
+    ? `${fakt.length} ${odmianaFaktur(fakt.length)} z terminem płatności w tym dniu`
+    : (d === dzisDzien ? 'Dzisiaj' : '&nbsp;');
+
+  return `
+  <div class="page">
+    <a class="btn btn--ghost back" href="#kalendarz">${IKONY.wstecz}Kalendarz</a>
+    <div class="day-head">
+      <h1 tabindex="-1">${nazwaDnia(d)}</h1>
+      <p>${podtytul}</p>
+    </div>
+    ${tresc}
+    ${fakt.length ? '<p class="sample-note">Faktury, dostawcy i adresy e-mail w prototypie są wymyślone.</p>' : ''}
+  </div>`;
+}
+
+/* Ekran pomocniczy: mapa ekranów (tylko dla twórcy i moderatora) */
+function ekranMapa() {
+  const dniZFakturami = [...new Set(DANE.faktury.map(f => f.dzien))].sort((a, b) => a - b);
+  const pustyDzien = [...Array(liczbaDni).keys()].map(i => i + 1).find(d => !dniZFakturami.includes(d));
+  return `
+  <div class="page map">
+    <h1 tabindex="-1">Mapa prototypu</h1>
+    <p>Ekran dla twórcy i moderatora testu. Nie jest dostępny z nawigacji aplikacji. Odśwież stronę (F5), aby wrócić do stanu początkowego.</p>
+    <h2>Ekrany</h2>
+    <ul>
+      <li><a href="#kalendarz">Kalendarz miesięczny</a> — start; po opłaceniu faktury pokazuje stan „po opłaceniu”</li>
+      ${dniZFakturami.map(d => {
+        const n = DANE.faktury.filter(f => f.dzien === d).length;
+        return `<li><a href="#dzien-${d}">Szczegóły dnia: ${d} ${MIESIACE_DOP[miesiac - 1]}</a> — ${n} ${odmianaFaktur(n)}${d < dzisDzien ? ', po terminie' : ''}</li>`;
+      }).join('')}
+      <li><a href="#dzien-${pustyDzien}">Szczegóły dnia bez faktur (${pustyDzien} ${MIESIACE_DOP[miesiac - 1]})</a> — stan pusty</li>
+    </ul>
+    <h2>Scenariusze</h2>
+    <ol>${DANE.scenariusze.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
+    <h2>Stan bieżący</h2>
+    <p>Opłacone faktury: ${stan.oplacone.size} z ${DANE.faktury.length}.</p>
+  </div>`;
+}
+
+/* =========================================================
+   LOGIKA NAWIGACJI I INTERAKCJI
+   ========================================================= */
+const app = document.getElementById('app');
+document.getElementById('inbox-label').textContent = DANE.skrzynka;
+
+function render() {
+  const hash = location.hash.replace('#', '') || 'kalendarz';
+  let m;
+  let html;
+  if (hash === 'mapa') html = ekranMapa();
+  else if ((m = hash.match(/^dzien-(\d{1,2})$/)) && +m[1] >= 1 && +m[1] <= liczbaDni) html = ekranDzien(+m[1]);
+  else {
+    if (hash !== 'kalendarz') { history.replaceState(null, '', '#kalendarz'); }
+    html = ekranKalendarz();
+  }
+  app.innerHTML = html;
+  const h1 = app.querySelector('h1');
+  if (h1 && !pierwszyRender) h1.focus({ preventScroll: true });   // czytniki ekranu dowiadują się o zmianie ekranu
+  pierwszyRender = false;
+  window.scrollTo(0, 0);
+}
+let pierwszyRender = true;
+
+/* Komunikat na dole ekranu */
+let toastTimer;
+function pokazKomunikat(tekst, zCofnij) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = tekst;
+  document.getElementById('toast-action').hidden = !zCofnij;
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, zCofnij ? 7000 : 3500);
+}
+
+document.getElementById('toast-action').addEventListener('click', () => {
+  if (stan.ostatnioOplacona != null) {
+    stan.oplacone.delete(stan.ostatnioOplacona);
+    stan.ostatnioOplacona = null;
+    render();
+    pokazKomunikat(DANE.teksty.przywrocona, false);
+  }
+});
+
+app.addEventListener('click', e => {
+  const poza = e.target.closest('[data-poza-zakresem]');
+  if (poza) { pokazKomunikat(DANE.teksty.pozaZakresem, false); return; }
+
+  const oplac = e.target.closest('[data-oplac]');
+  if (oplac) {
+    const id = +oplac.dataset.oplac;
+    const wiersz = oplac.closest('.invoice');
+    wiersz.querySelectorAll('button').forEach(b => b.disabled = true);
+    oplac.textContent = 'Zapisywanie…';
+    wiersz.classList.add('is-leaving');
+    setTimeout(() => {                       // symulacja zapisu (krótki stan ładowania)
+      stan.oplacone.add(id);
+      stan.ostatnioOplacona = id;
+      render();
+      pokazKomunikat(DANE.teksty.oplacona, true);
+    }, 600);
+  }
+});
+
+window.addEventListener('hashchange', render);
+render();
+</script>
+</body>
+</html>
