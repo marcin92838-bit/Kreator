@@ -133,11 +133,12 @@ main { flex: 1; padding: var(--spacing-xxxl) 0 var(--spacing-xxxxl); }
 .badge { display: inline-block; padding: 2px 8px; font-size: var(--text-sm); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
 .badge--danger { background: var(--a11y-danger-text); color: #fff; }
 .badge--neutral { background: var(--color-sand); color: var(--color-text); }
+.badge--outline { background: var(--color-bg); color: var(--color-primary); border: 1px solid var(--color-primary); padding: 1px 7px; }
 
 /* --- Ekran: kalendarz --- */
 .cal-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--spacing-md); flex-wrap: wrap; margin-bottom: var(--spacing-xl); }
 .cal-head h1 { font-size: var(--text-xxxl); }
-.cal-head__nav { display: flex; gap: var(--spacing-xs); }
+.cal-head__nav { display: flex; gap: var(--spacing-xs); flex-wrap: wrap; }
 .cal-summary { margin: var(--spacing-xs) 0 0; color: var(--color-text); }
 .cal-summary strong { color: var(--color-primary); }
 
@@ -158,8 +159,11 @@ main { flex: 1; padding: var(--spacing-xxxl) 0 var(--spacing-xxxxl); }
 .day.is-today .day__num { background: var(--color-primary); color: #fff; font-weight: 600; }
 .day.is-weekend .day__num { color: var(--a11y-muted); }
 .day.is-today.is-weekend .day__num { color: #fff; }
-.chip { display: block; padding: 2px 6px; font-size: var(--text-sm); line-height: 1.35; background: var(--color-sand); border-left: 3px solid var(--color-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip { display: flex; align-items: center; gap: 4px; padding: 2px 6px; font-size: var(--text-sm); line-height: 1.35; background: var(--color-sand); border-left: 3px solid var(--color-primary); white-space: nowrap; overflow: hidden; }
+.chip > span { overflow: hidden; text-overflow: ellipsis; }
+.chip svg { flex: none; }
 .chip.is-overdue { border-left-color: var(--a11y-danger-text); background: #FBEAE8; }
+.chip.is-task { background: var(--color-bg); border: 1px solid var(--color-primary); padding: 1px 5px; }
 .chip--more { background: transparent; border-left-color: transparent; padding-left: 9px; text-decoration: underline; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
@@ -168,28 +172,54 @@ main { flex: 1; padding: var(--spacing-xxxl) 0 var(--spacing-xxxxl); }
 .legend i { display: inline-block; width: 14px; height: 14px; background: var(--color-sand); border-left: 3px solid var(--color-primary); }
 .legend i.is-overdue { background: #FBEAE8; border-left-color: var(--a11y-danger-text); }
 .legend i.is-today { background: var(--color-primary); border: 0; }
+.legend i.is-task { background: var(--color-bg); border: 1px solid var(--color-primary); }
 
 .banner { display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-md); margin-bottom: var(--spacing-xl); background: var(--color-sand); }
 .banner--success { color: var(--a11y-success-text); }
 
 /* --- Ekran: szczegóły dnia --- */
 .back { margin-left: calc(-1 * var(--spacing-md)); margin-bottom: var(--spacing-md); }
+.day-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--spacing-md); flex-wrap: wrap; max-width: 760px; }
 .day-head h1 { font-size: var(--text-xxxl); }
 .day-head p { margin: var(--spacing-xs) 0 var(--spacing-xl); }
+.section-title { font-size: var(--text-sm); font-weight: 400; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text); margin: var(--spacing-xl) 0 var(--spacing-xs); }
 
 .invoice-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--color-border); max-width: 760px; }
 .invoice { display: grid; grid-template-columns: 1fr auto; gap: var(--spacing-md) var(--spacing-xl); align-items: center; padding: var(--spacing-xl) 0; border-bottom: 1px solid var(--color-border); }
 .invoice__provider { font-size: var(--text-xl); font-weight: 600; color: var(--color-primary); display: flex; align-items: center; gap: var(--spacing-sm); flex-wrap: wrap; }
 .invoice__desc { margin: var(--spacing-xxs) 0; font-size: var(--text-md); }
-.invoice__from { margin: 0; font-size: var(--text-md); color: var(--a11y-muted); word-break: break-all; }
+.invoice__from { margin: 0; font-size: var(--text-md); color: var(--a11y-muted); word-break: break-word; }
 .invoice__actions { display: flex; flex-direction: column; gap: var(--spacing-xs); align-items: stretch; }
 .invoice.is-leaving { opacity: .4; transition: opacity .2s; }
 
 .empty { max-width: 560px; padding: var(--spacing-xxxl); background: var(--color-sand); }
 .empty h2 { font-size: var(--text-xl); margin: var(--spacing-sm) 0 var(--spacing-xs); }
 .empty p { margin: 0 0 var(--spacing-lg); }
+.empty__actions { display: flex; gap: var(--spacing-sm); flex-wrap: wrap; }
 
 .sample-note { margin-top: var(--spacing-xl); font-size: var(--text-sm); color: var(--a11y-muted); max-width: 760px; }
+
+/* --- Ekran: formularz zadania --- */
+.form { max-width: 560px; }
+.form h1 { font-size: var(--text-xxxl); margin-bottom: var(--spacing-xs); }
+.form__intro { margin: 0 0 var(--spacing-xl); }
+.field { margin-bottom: var(--spacing-xl); }
+.field > label, .field legend { display: block; font-weight: 600; color: var(--color-primary); margin-bottom: var(--spacing-xxs); padding: 0; }
+.field fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.field__hint { margin: 0 0 var(--spacing-xs); font-size: var(--text-md); color: var(--a11y-muted); }
+.input {
+  width: 100%; min-height: var(--a11y-target); padding: 0 var(--spacing-sm);
+  font: inherit; font-size: var(--text-md); color: var(--color-text);
+  background: var(--color-bg); border: 1px solid #8C8C8C; /* ramka pola: kontrast min. 3:1 (DESIGN.md nie opisuje pól formularza) */ border-radius: var(--radius);
+}
+.input:hover { border-color: var(--color-primary); }
+.input:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 0; border-color: var(--color-primary); }
+.input[aria-invalid="true"] { border: 2px solid var(--a11y-danger-text); }
+.field__error { display: flex; align-items: center; gap: var(--spacing-xs); margin: var(--spacing-xs) 0 0; color: var(--a11y-danger-text); font-weight: 600; }
+.field__error[hidden] { display: none; }
+.date-row { display: flex; gap: var(--spacing-xs); margin-bottom: var(--spacing-xs); }
+.date-row .input { flex: 1; }
+.form__actions { display: flex; gap: var(--spacing-sm); flex-wrap: wrap; padding-top: var(--spacing-md); border-top: 1px solid var(--color-border); }
 
 /* --- Ekran: mapa --- */
 .map h1 { font-size: var(--text-xxxl); margin-bottom: var(--spacing-xs); }
@@ -210,6 +240,7 @@ main { flex: 1; padding: var(--spacing-xxxl) 0 var(--spacing-xxxxl); }
 .toast .btn { color: #fff; border-color: transparent; }
 .toast .btn:hover { background: #3A3A3A; }
 .toast .btn:focus-visible { outline-color: #fff; }
+.toast #toast-text { padding: var(--spacing-xs) 0; }
 
 /* Stopka */
 .footer { border-top: 1px solid var(--color-border); padding: var(--spacing-md) 0; font-size: var(--text-sm); color: var(--a11y-muted); }
@@ -220,7 +251,7 @@ main { flex: 1; padding: var(--spacing-xxxl) 0 var(--spacing-xxxxl); }
   .app-header__inner, .page { padding: 0 var(--spacing-md); }
   .calendar td, .day { height: 64px; min-height: 64px; }
   .chip { display: none; }
-  .day.has-invoices::after { content: ""; display: block; width: 8px; height: 8px; background: var(--color-primary); }
+  .day.has-items::after { content: ""; display: block; width: 8px; height: 8px; background: var(--color-primary); }
   .day.has-overdue::after { background: var(--a11y-danger-text); }
   .invoice { grid-template-columns: 1fr; }
   .inbox-status span { display: none; }
@@ -274,15 +305,25 @@ const DANE = {
     { id: 8, dzien: 25, dostawca: 'Lingwista',          email: 'faktury@lingwista.example',          opis: 'Kurs angielskiego online – grudzień 2026, 120,00 zł' },
     { id: 9, dzien: 28, dostawca: 'Serwerownia',        email: 'billing@serwerownia.example',        opis: 'Domena i hosting – odnowienie na rok, 249,00 zł' }
   ],
+  // Zadania dodane ręcznie. Terminy w formacie RRRR-MM-DD; kilka terminów = harmonogram.
+  zadania: [
+    { id: 1, nazwa: 'Odczyt licznika gazu', terminy: ['2026-11-13', '2027-01-15'] }
+  ],
   scenariusze: [
     'A. Opłać fakturę: kalendarz → dzień z fakturami → oznacz jedną jako opłaconą → wróć do kalendarza i sprawdź, że jej nie ma.',
-    'B. Znajdź konkretną fakturę: w kalendarzu odszukaj fakturę za prąd i sprawdź, kto ją przysłał i na jaką kwotę.',
-    'C. Dzień bez faktur: kliknij dzień bez oznaczeń → zobacz komunikat → wróć do kalendarza.'
+    'B. Znajdź konkretną fakturę: w kalendarzu odszukaj fakturę za gaz lub prąd i sprawdź, kto ją przysłał i na jaką kwotę.',
+    'C. Dzień bez faktur: kliknij dzień bez oznaczeń → zobacz komunikat → wróć do kalendarza.',
+    'D. Dodaj zadanie z harmonogramem: kalendarz → dodaj zadanie → wpisz nazwę i kilka terminów (np. wywóz śmieci 17 listopada, 21 grudnia) → zadanie widoczne w kalendarzu.',
+    'E. Odhacz zadanie: dzień z zadaniem → oznacz jako zrobione → zadanie znika (można cofnąć).'
   ],
   teksty: {
     pozaZakresem: 'Ta funkcja nie jest częścią prototypu.',
     oplacona: 'Faktura oznaczona jako opłacona.',
-    przywrocona: 'Przywrócono fakturę do opłacenia.'
+    zrobione: 'Zadanie oznaczone jako zrobione.',
+    przywrocona: 'Przywrócono fakturę do opłacenia.',
+    przywrocone: 'Przywrócono zadanie.',
+    bladNazwa: 'Wpisz nazwę zadania.',
+    bladTermin: 'Wybierz co najmniej jeden termin.'
   }
 };
 
@@ -290,8 +331,11 @@ const DANE = {
    STAN (tylko w pamięci strony — odświeżenie = reset)
    ========================================================= */
 const stan = {
-  oplacone: new Set(),   // id opłaconych faktur
-  ostatnioOplacona: null
+  oplacone: new Set(),     // id opłaconych faktur
+  zrobione: new Set(),     // klucze "idZadania|RRRR-MM-DD" zrobionych terminów
+  zadania: DANE.zadania.map(z => ({ ...z, terminy: [...z.terminy] })),
+  nastepneIdZadania: DANE.zadania.length + 1,
+  ostatnio: null           // { typ: 'faktura' | 'zadanie', klucz }
 };
 
 /* Pomocnicze */
@@ -303,12 +347,25 @@ const DNI_DLUGO = ['poniedziałek','wtorek','środa','czwartek','piątek','sobot
 
 const { rok, miesiac, dzien: dzisDzien } = DANE.dzis;
 const liczbaDni = new Date(rok, miesiac, 0).getDate();
+const pad = n => String(n).padStart(2, '0');
+const dataISO = d => `${rok}-${pad(miesiac)}-${pad(d)}`;
+const dataSlownie = iso => { const [r, m, d] = iso.split('-').map(Number); return `${d} ${MIESIACE_DOP[m - 1]}${r !== rok ? ' ' + r : ''}`; };
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nieoplacone = () => DANE.faktury.filter(f => !stan.oplacone.has(f.id));
 const fakturyDnia = d => nieoplacone().filter(f => f.dzien === d);
+const zadaniaDnia = d => stan.zadania
+  .filter(z => z.terminy.includes(dataISO(d)) && !stan.zrobione.has(z.id + '|' + dataISO(d)));
+const zadaniaWMiesiacu = () => {
+  let n = 0;
+  for (let d = 1; d <= liczbaDni; d++) n += zadaniaDnia(d).length;
+  return n;
+};
 const poTerminie = f => f.dzien < dzisDzien;
-const odmianaFaktur = n => n === 1 ? 'faktura' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? 'faktury' : 'faktur';
+const odmiana = (n, jeden, kilka, wiele) => n === 1 ? jeden : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? kilka : wiele;
+const odmianaFaktur = n => odmiana(n, 'faktura', 'faktury', 'faktur');
+const odmianaZadan = n => odmiana(n, 'zadanie', 'zadania', 'zadań');
+const odmianaTerminow = n => odmiana(n, 'termin', 'terminy', 'terminów');
 const nazwaDnia = d => {
   const data = new Date(rok, miesiac - 1, d);
   const t = DNI_TYG[data.getDay()];
@@ -319,6 +376,10 @@ const IKONY = {
   wstecz: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
   dalej: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
   ok: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  plus: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  usun: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  blad: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>',
+  zadanie: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><path d="M8 12l3 3 5-6"/></svg>',
   mail: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="14"/><path d="m3 6 9 7 9-7"/></svg>',
   pusto: '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4M9 15.5l2 2 4-4"/></svg>'
 };
@@ -331,25 +392,32 @@ const IKONY = {
 function ekranKalendarz() {
   const lista = nieoplacone();
   const poTerm = lista.filter(poTerminie).length;
+  const ileZadan = zadaniaWMiesiacu();
   const pierwszyDzienTyg = (new Date(rok, miesiac - 1, 1).getDay() + 6) % 7; // 0 = poniedziałek
 
   let komorki = [];
   for (let i = 0; i < pierwszyDzienTyg; i++) komorki.push('<td class="is-empty"></td>');
   for (let d = 1; d <= liczbaDni; d++) {
     const fakt = fakturyDnia(d);
+    const zad = zadaniaDnia(d);
     const dzienTyg = (pierwszyDzienTyg + d - 1) % 7;
     const klasy = ['day'];
     if (d === dzisDzien) klasy.push('is-today');
     if (dzienTyg >= 5) klasy.push('is-weekend');
-    if (fakt.length) klasy.push('has-invoices');
+    if (fakt.length || zad.length) klasy.push('has-items');
     if (fakt.some(poTerminie)) klasy.push('has-overdue');
 
-    const chipy = fakt.slice(0, 2).map(f =>
-      `<span class="chip${poTerminie(f) ? ' is-overdue' : ''}">${esc(f.dostawca)}</span>`).join('') +
-      (fakt.length > 2 ? `<span class="chip chip--more">+${fakt.length - 2} więcej</span>` : '');
+    const wpisy = [
+      ...fakt.map(f => `<span class="chip${poTerminie(f) ? ' is-overdue' : ''}"><span>${esc(f.dostawca)}</span></span>`),
+      ...zad.map(z => `<span class="chip is-task">${IKONY.zadanie}<span>${esc(z.nazwa)}</span></span>`)
+    ];
+    const chipy = wpisy.slice(0, 2).join('') +
+      (wpisy.length > 2 ? `<span class="chip chip--more"><span>+${wpisy.length - 2} więcej</span></span>` : '');
 
-    const opisSr = `${d} ${MIESIACE_DOP[miesiac - 1]}${d === dzisDzien ? ', dzisiaj' : ''}: ` +
-      (fakt.length ? `${fakt.length} ${odmianaFaktur(fakt.length)} do opłacenia${fakt.some(poTerminie) ? ', po terminie' : ''}` : 'brak faktur');
+    const czesci = [];
+    if (fakt.length) czesci.push(`${fakt.length} ${odmianaFaktur(fakt.length)} do opłacenia${fakt.some(poTerminie) ? ', po terminie' : ''}`);
+    if (zad.length) czesci.push(`${zad.length} ${odmianaZadan(zad.length)}`);
+    const opisSr = `${d} ${MIESIACE_DOP[miesiac - 1]}${d === dzisDzien ? ', dzisiaj' : ''}: ` + (czesci.length ? czesci.join(', ') : 'nic zaplanowanego');
 
     komorki.push(`<td><a class="${klasy.join(' ')}" href="#dzien-${d}" aria-label="${opisSr}">
       <span class="day__num">${d}</span>${chipy}</a></td>`);
@@ -359,11 +427,11 @@ function ekranKalendarz() {
   let wiersze = '';
   for (let i = 0; i < komorki.length; i += 7) wiersze += '<tr>' + komorki.slice(i, i + 7).join('') + '</tr>';
 
-  const podsumowanie = lista.length
-    ? `Do opłacenia: <strong>${lista.length} ${odmianaFaktur(lista.length)}</strong>` +
-      (poTerm ? ` · <span style="color:var(--a11y-danger-text)">${poTerm} po terminie</span>` : '') +
-      (stan.oplacone.size ? ` · Opłacone w tym miesiącu: ${stan.oplacone.size}` : '')
-    : `Opłacone w tym miesiącu: ${stan.oplacone.size}`;
+  const czesciPods = [];
+  czesciPods.push(lista.length ? `Do opłacenia: <strong>${lista.length} ${odmianaFaktur(lista.length)}</strong>` : 'Faktury: wszystkie opłacone');
+  if (poTerm) czesciPods.push(`<span style="color:var(--a11y-danger-text)">${poTerm} po terminie</span>`);
+  if (ileZadan) czesciPods.push(`Twoje zadania: <strong>${ileZadan}</strong>`);
+  if (stan.oplacone.size) czesciPods.push(`Opłacone w tym miesiącu: ${stan.oplacone.size}`);
 
   return `
   <div class="page">
@@ -371,22 +439,24 @@ function ekranKalendarz() {
     <div class="cal-head">
       <div>
         <h1 tabindex="-1">${MIESIACE[miesiac - 1].charAt(0).toUpperCase() + MIESIACE[miesiac - 1].slice(1)} ${rok}</h1>
-        <p class="cal-summary">${podsumowanie}</p>
+        <p class="cal-summary">${czesciPods.join(' · ')}</p>
       </div>
       <div class="cal-head__nav">
+        <a class="btn btn--primary" href="#dodaj-zadanie">${IKONY.plus}Dodaj zadanie</a>
         <button class="btn btn--icon" type="button" data-poza-zakresem aria-label="Poprzedni miesiąc">${IKONY.wstecz}</button>
         <button class="btn btn--icon" type="button" data-poza-zakresem aria-label="Następny miesiąc">${IKONY.dalej}</button>
       </div>
     </div>
     <table class="calendar">
-      <caption class="sr-only">Faktury do opłacenia według terminu płatności. Kliknij dzień, aby zobaczyć szczegóły.</caption>
+      <caption class="sr-only">Faktury do opłacenia według terminu płatności i Twoje zadania. Kliknij dzień, aby zobaczyć szczegóły.</caption>
       <thead><tr>${DNI_KROTKO.map((d, i) => `<th scope="col"><abbr title="${DNI_DLUGO[i]}" style="text-decoration:none">${d}</abbr></th>`).join('')}</tr></thead>
       <tbody>${wiersze}</tbody>
     </table>
     <div class="legend" aria-hidden="true">
       <span><i class="is-today"></i>Dzisiaj</span>
-      <span><i></i>Faktura do opłacenia (termin płatności)</span>
-      <span><i class="is-overdue"></i>Po terminie</span>
+      <span><i></i>Faktura z poczty (termin płatności)</span>
+      <span><i class="is-overdue"></i>Faktura po terminie</span>
+      <span><i class="is-task"></i>Twoje zadanie</span>
     </div>
   </div>`;
 }
@@ -394,14 +464,17 @@ function ekranKalendarz() {
 /* Ekran 2: Szczegóły dnia */
 function ekranDzien(d) {
   const fakt = fakturyDnia(d);
-  const ileWszystkich = DANE.faktury.filter(f => f.dzien === d).length;
-  let tresc;
+  const zad = zadaniaDnia(d);
+  const iso = dataISO(d);
+  const cokolwiekBylo = DANE.faktury.some(f => f.dzien === d) || stan.zadania.some(z => z.terminy.includes(iso));
+  let tresc = '';
 
   if (fakt.length) {
-    tresc = `
+    tresc += `
+      <h2 class="section-title">Faktury do opłacenia</h2>
       <ul class="invoice-list">
         ${fakt.map(f => `
-        <li class="invoice" data-id="${f.id}">
+        <li class="invoice">
           <div>
             <div class="invoice__provider">${esc(f.dostawca)}${poTerminie(f) ? '<span class="badge badge--danger">Po terminie</span>' : ''}</div>
             <p class="invoice__desc">${esc(f.opis)}</p>
@@ -413,44 +486,118 @@ function ekranDzien(d) {
           </div>
         </li>`).join('')}
       </ul>`;
-  } else if (ileWszystkich) {
-    tresc = `
+  }
+
+  if (zad.length) {
+    tresc += `
+      <h2 class="section-title">Twoje zadania</h2>
+      <ul class="invoice-list">
+        ${zad.map(z => {
+          const pozostale = z.terminy.filter(t => t !== iso).sort();
+          const nastepny = pozostale.find(t => t > iso);
+          const harmonogram = z.terminy.length > 1
+            ? `Harmonogram: ${z.terminy.length} ${odmianaTerminow(z.terminy.length)}${nastepny ? ` · następny: ${dataSlownie(nastepny)}` : ''}`
+            : 'Jednorazowe';
+          return `
+        <li class="invoice">
+          <div>
+            <div class="invoice__provider">${esc(z.nazwa)}<span class="badge badge--outline">Twoje zadanie</span></div>
+            <p class="invoice__from">${harmonogram}</p>
+          </div>
+          <div class="invoice__actions">
+            <button class="btn btn--primary" type="button" data-zrobione="${z.id}|${iso}">${IKONY.ok}Oznacz jako zrobione</button>
+          </div>
+        </li>`;
+        }).join('')}
+      </ul>`;
+  }
+
+  if (!fakt.length && !zad.length) {
+    tresc = cokolwiekBylo ? `
       <div class="empty" role="status">
         ${IKONY.pusto}
-        <h2>Wszystkie faktury z tego dnia są opłacone</h2>
-        <p>Nie znikły — po prostu nie musisz już o nich pamiętać.</p>
-        <a class="btn btn--primary" href="#kalendarz">Wróć do kalendarza</a>
-      </div>`;
-  } else {
-    tresc = `
+        <h2>Wszystko z tego dnia jest załatwione</h2>
+        <p>Opłacone faktury i zrobione zadania nie znikły — po prostu nie musisz już o nich pamiętać.</p>
+        <div class="empty__actions"><a class="btn btn--primary" href="#kalendarz">Wróć do kalendarza</a></div>
+      </div>` : `
       <div class="empty">
         ${IKONY.pusto}
-        <h2>Brak faktur do opłacenia w tym dniu</h2>
-        <p>Nie przyszedł żaden mail z fakturą z terminem płatności na ten dzień.</p>
-        <a class="btn btn--primary" href="#kalendarz">Wróć do kalendarza</a>
+        <h2>Nic zaplanowanego na ten dzień</h2>
+        <p>Nie przyszła żadna faktura z terminem płatności na ten dzień i nie masz tu żadnych zadań.</p>
+        <div class="empty__actions">
+          <a class="btn btn--primary" href="#kalendarz">Wróć do kalendarza</a>
+          <a class="btn btn--secondary" href="#dodaj-zadanie-${d}">${IKONY.plus}Dodaj zadanie na ten dzień</a>
+        </div>
       </div>`;
   }
 
-  const podtytul = fakt.length
-    ? `${fakt.length} ${odmianaFaktur(fakt.length)} z terminem płatności w tym dniu`
-    : (d === dzisDzien ? 'Dzisiaj' : '&nbsp;');
+  const czesci = [];
+  if (fakt.length) czesci.push(`${fakt.length} ${odmianaFaktur(fakt.length)} z terminem płatności w tym dniu`);
+  if (zad.length) czesci.push(`${zad.length} ${odmianaZadan(zad.length)}`);
+  const podtytul = czesci.length ? czesci.join(' · ') : (d === dzisDzien ? 'Dzisiaj' : '&nbsp;');
 
   return `
   <div class="page">
     <a class="btn btn--ghost back" href="#kalendarz">${IKONY.wstecz}Kalendarz</a>
     <div class="day-head">
-      <h1 tabindex="-1">${nazwaDnia(d)}</h1>
-      <p>${podtytul}</p>
+      <div>
+        <h1 tabindex="-1">${nazwaDnia(d)}</h1>
+        <p>${podtytul}</p>
+      </div>
+      ${(fakt.length || zad.length) ? `<a class="btn btn--secondary" href="#dodaj-zadanie-${d}">${IKONY.plus}Dodaj zadanie na ten dzień</a>` : ''}
     </div>
     ${tresc}
     ${fakt.length ? '<p class="sample-note">Faktury, dostawcy i adresy e-mail w prototypie są wymyślone.</p>' : ''}
   </div>`;
 }
 
+/* Ekran 4: Dodawanie zadania */
+function wierszTerminu(wartosc, moznaUsunac, nr) {
+  return `<div class="date-row">
+    <input class="input" type="date" name="termin" value="${wartosc || ''}" aria-label="Termin ${nr}" aria-describedby="blad-termin">
+    ${moznaUsunac ? `<button class="btn btn--icon" type="button" data-usun-termin aria-label="Usuń termin ${nr}">${IKONY.usun}</button>` : ''}
+  </div>`;
+}
+
+function ekranDodajZadanie(d) {
+  const domyslny = d ? dataISO(d) : '';
+  return `
+  <div class="page">
+    <a class="btn btn--ghost back" href="${d ? '#dzien-' + d : '#kalendarz'}">${IKONY.wstecz}${d ? 'Wróć do dnia' : 'Kalendarz'}</a>
+    <form class="form" id="form-zadanie" novalidate>
+      <h1 tabindex="-1">Nowe zadanie</h1>
+      <p class="form__intro">Dodaj do kalendarza coś, o czym nie chcesz pamiętać. Pojawi się obok faktur z poczty.</p>
+
+      <div class="field">
+        <label for="nazwa">Nazwa zadania</label>
+        <input class="input" id="nazwa" name="nazwa" type="text" autocomplete="off" placeholder="np. Wywóz śmieci" aria-describedby="blad-nazwa">
+        <p class="field__error" id="blad-nazwa" hidden>${IKONY.blad}<span>${DANE.teksty.bladNazwa}</span></p>
+      </div>
+
+      <div class="field">
+        <fieldset>
+          <legend>Terminy</legend>
+          <p class="field__hint">Jeśli zadanie się powtarza, ale w różne dni (np. według harmonogramu wywozu śmieci), dodaj każdy termin osobno.</p>
+          <div id="terminy">${wierszTerminu(domyslny, false, 1)}</div>
+          <button class="btn btn--ghost" type="button" id="dodaj-termin">${IKONY.plus}Dodaj kolejny termin</button>
+          <p class="field__error" id="blad-termin" hidden>${IKONY.blad}<span>${DANE.teksty.bladTermin}</span></p>
+        </fieldset>
+      </div>
+
+      <div class="form__actions">
+        <button class="btn btn--primary" type="submit">Zapisz zadanie</button>
+        <a class="btn btn--ghost" href="${d ? '#dzien-' + d : '#kalendarz'}">Anuluj</a>
+      </div>
+    </form>
+  </div>`;
+}
+
 /* Ekran pomocniczy: mapa ekranów (tylko dla twórcy i moderatora) */
 function ekranMapa() {
   const dniZFakturami = [...new Set(DANE.faktury.map(f => f.dzien))].sort((a, b) => a - b);
-  const pustyDzien = [...Array(liczbaDni).keys()].map(i => i + 1).find(d => !dniZFakturami.includes(d));
+  const dniZZadaniami = [...new Set(stan.zadania.flatMap(z => z.terminy)
+    .filter(t => t.startsWith(`${rok}-${pad(miesiac)}`)).map(t => +t.slice(8)))].sort((a, b) => a - b);
+  const pustyDzien = [...Array(liczbaDni).keys()].map(i => i + 1).find(d => !dniZFakturami.includes(d) && !dniZZadaniami.includes(d));
   return `
   <div class="page map">
     <h1 tabindex="-1">Mapa prototypu</h1>
@@ -462,12 +609,15 @@ function ekranMapa() {
         const n = DANE.faktury.filter(f => f.dzien === d).length;
         return `<li><a href="#dzien-${d}">Szczegóły dnia: ${d} ${MIESIACE_DOP[miesiac - 1]}</a> — ${n} ${odmianaFaktur(n)}${d < dzisDzien ? ', po terminie' : ''}</li>`;
       }).join('')}
-      <li><a href="#dzien-${pustyDzien}">Szczegóły dnia bez faktur (${pustyDzien} ${MIESIACE_DOP[miesiac - 1]})</a> — stan pusty</li>
+      ${dniZZadaniami.map(d => `<li><a href="#dzien-${d}">Szczegóły dnia: ${d} ${MIESIACE_DOP[miesiac - 1]}</a> — zadanie</li>`).join('')}
+      <li><a href="#dzien-${pustyDzien}">Szczegóły dnia bez wpisów (${pustyDzien} ${MIESIACE_DOP[miesiac - 1]})</a> — stan pusty</li>
+      <li><a href="#dodaj-zadanie">Dodawanie zadania</a> — formularz; zapisz z pustą nazwą, aby zobaczyć błąd walidacji</li>
+      <li><a href="#dodaj-zadanie-17">Dodawanie zadania z podpowiedzianym dniem (17 ${MIESIACE_DOP[miesiac - 1]})</a></li>
     </ul>
     <h2>Scenariusze</h2>
     <ol>${DANE.scenariusze.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
     <h2>Stan bieżący</h2>
-    <p>Opłacone faktury: ${stan.oplacone.size} z ${DANE.faktury.length}.</p>
+    <p>Opłacone faktury: ${stan.oplacone.size} z ${DANE.faktury.length}. Zadania: ${stan.zadania.length}, zrobione terminy: ${stan.zrobione.size}.</p>
   </div>`;
 }
 
@@ -477,12 +627,16 @@ function ekranMapa() {
 const app = document.getElementById('app');
 document.getElementById('inbox-label').textContent = DANE.skrzynka;
 
+let pierwszyRender = true;
 function render() {
   const hash = location.hash.replace('#', '') || 'kalendarz';
   let m;
   let html;
+  const dzienOk = n => n >= 1 && n <= liczbaDni;
   if (hash === 'mapa') html = ekranMapa();
-  else if ((m = hash.match(/^dzien-(\d{1,2})$/)) && +m[1] >= 1 && +m[1] <= liczbaDni) html = ekranDzien(+m[1]);
+  else if ((m = hash.match(/^dzien-(\d{1,2})$/)) && dzienOk(+m[1])) html = ekranDzien(+m[1]);
+  else if (hash === 'dodaj-zadanie') html = ekranDodajZadanie(null);
+  else if ((m = hash.match(/^dodaj-zadanie-(\d{1,2})$/)) && dzienOk(+m[1])) html = ekranDodajZadanie(+m[1]);
   else {
     if (hash !== 'kalendarz') { history.replaceState(null, '', '#kalendarz'); }
     html = ekranKalendarz();
@@ -493,7 +647,6 @@ function render() {
   pierwszyRender = false;
   window.scrollTo(0, 0);
 }
-let pierwszyRender = true;
 
 /* Komunikat na dole ekranu */
 let toastTimer;
@@ -503,17 +656,27 @@ function pokazKomunikat(tekst, zCofnij) {
   document.getElementById('toast-action').hidden = !zCofnij;
   t.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.hidden = true; }, zCofnij ? 7000 : 3500);
+  toastTimer = setTimeout(() => { t.hidden = true; }, zCofnij ? 7000 : 4500);
 }
 
 document.getElementById('toast-action').addEventListener('click', () => {
-  if (stan.ostatnioOplacona != null) {
-    stan.oplacone.delete(stan.ostatnioOplacona);
-    stan.ostatnioOplacona = null;
-    render();
-    pokazKomunikat(DANE.teksty.przywrocona, false);
-  }
+  const o = stan.ostatnio;
+  if (!o) return;
+  if (o.typ === 'faktura') stan.oplacone.delete(o.klucz);
+  else stan.zrobione.delete(o.klucz);
+  stan.ostatnio = null;
+  render();
+  pokazKomunikat(o.typ === 'faktura' ? DANE.teksty.przywrocona : DANE.teksty.przywrocone, false);
 });
+
+/* Oznaczanie faktury / zadania z krótkim stanem ładowania */
+function oznacz(przycisk, zapisz, komunikat) {
+  const wiersz = przycisk.closest('.invoice');
+  wiersz.querySelectorAll('button').forEach(b => b.disabled = true);
+  przycisk.textContent = 'Zapisywanie…';
+  wiersz.classList.add('is-leaving');
+  setTimeout(() => { zapisz(); render(); pokazKomunikat(komunikat, true); }, 600);
+}
 
 app.addEventListener('click', e => {
   const poza = e.target.closest('[data-poza-zakresem]');
@@ -522,16 +685,73 @@ app.addEventListener('click', e => {
   const oplac = e.target.closest('[data-oplac]');
   if (oplac) {
     const id = +oplac.dataset.oplac;
-    const wiersz = oplac.closest('.invoice');
-    wiersz.querySelectorAll('button').forEach(b => b.disabled = true);
-    oplac.textContent = 'Zapisywanie…';
-    wiersz.classList.add('is-leaving');
-    setTimeout(() => {                       // symulacja zapisu (krótki stan ładowania)
-      stan.oplacone.add(id);
-      stan.ostatnioOplacona = id;
-      render();
-      pokazKomunikat(DANE.teksty.oplacona, true);
-    }, 600);
+    oznacz(oplac, () => { stan.oplacone.add(id); stan.ostatnio = { typ: 'faktura', klucz: id }; }, DANE.teksty.oplacona);
+    return;
+  }
+
+  const zrob = e.target.closest('[data-zrobione]');
+  if (zrob) {
+    const klucz = zrob.dataset.zrobione;
+    oznacz(zrob, () => { stan.zrobione.add(klucz); stan.ostatnio = { typ: 'zadanie', klucz }; }, DANE.teksty.zrobione);
+    return;
+  }
+
+  if (e.target.closest('#dodaj-termin')) {
+    const kontener = document.getElementById('terminy');
+    const nr = kontener.children.length + 1;
+    kontener.insertAdjacentHTML('beforeend', wierszTerminu('', true, nr));
+    kontener.lastElementChild.querySelector('input').focus();
+    return;
+  }
+
+  const usun = e.target.closest('[data-usun-termin]');
+  if (usun) {
+    usun.closest('.date-row').remove();
+    document.getElementById('dodaj-termin').focus();
+  }
+});
+
+/* Zapis formularza zadania (z walidacją) */
+app.addEventListener('submit', e => {
+  if (e.target.id !== 'form-zadanie') return;
+  e.preventDefault();
+  const form = e.target;
+  const pole = form.nazwa;
+  const nazwa = pole.value.trim();
+  const terminy = [...new Set([...form.querySelectorAll('input[name="termin"]')].map(i => i.value).filter(Boolean))].sort();
+
+  const bladNazwa = !nazwa;
+  const bladTermin = terminy.length === 0;
+  pole.setAttribute('aria-invalid', bladNazwa);
+  document.getElementById('blad-nazwa').hidden = !bladNazwa;
+  form.querySelectorAll('input[name="termin"]').forEach(i => i.setAttribute('aria-invalid', bladTermin));
+  document.getElementById('blad-termin').hidden = !bladTermin;
+  if (bladNazwa) { pole.focus(); return; }
+  if (bladTermin) { form.querySelector('input[name="termin"]').focus(); return; }
+
+  const przycisk = form.querySelector('[type="submit"]');
+  przycisk.disabled = true;
+  przycisk.textContent = 'Zapisywanie…';
+  setTimeout(() => {
+    stan.zadania.push({ id: stan.nastepneIdZadania++, nazwa, terminy });
+    const wTymMiesiacu = terminy.filter(t => t.startsWith(`${rok}-${pad(miesiac)}`)).length;
+    const inne = terminy.length - wTymMiesiacu;
+    let tekst = `Dodano zadanie „${nazwa}”: ${terminy.length} ${odmianaTerminow(terminy.length)}.`;
+    if (inne) tekst += ` W innych miesiącach: ${inne}.`;
+    location.replace('#kalendarz');   // formularz nie zostaje w historii „wstecz”; zmiana adresu odświeża ekran
+    pokazKomunikat(tekst, false);
+  }, 600);
+});
+
+/* Usuwanie komunikatu błędu, gdy użytkownik poprawia pole */
+app.addEventListener('input', e => {
+  if (e.target.id === 'nazwa' && e.target.value.trim()) {
+    e.target.setAttribute('aria-invalid', 'false');
+    document.getElementById('blad-nazwa').hidden = true;
+  }
+  if (e.target.name === 'termin' && e.target.value) {
+    document.querySelectorAll('input[name="termin"]').forEach(i => i.setAttribute('aria-invalid', 'false'));
+    document.getElementById('blad-termin').hidden = true;
   }
 });
 
