@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kalendarz faktur — prototyp</title>
+<title>Kalendarz zadań — prototyp</title>
 <style>
 /* =========================================================
    STYLE
@@ -63,9 +63,15 @@
   --a11y-muted: #5F5F5F;          /* zamiast #747474 na tłach innych niż białe */
   --a11y-success-text: #3E6E3E;   /* zamiast #639C63 jako tekst */
   --a11y-danger-text: #B3261E;    /* zamiast #E74C40 jako tekst / tło plakietki */
+  --a11y-danger-bg: #FBEAE8;      /* jasne tło wpisów po terminie */
   --a11y-warning-text: #8A5300;   /* zamiast #FF9F0F jako tekst */
   --a11y-target: 44px;            /* zamiast 40px wysokości przycisku */
   --font-stack: "Azeret", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Miganie wpisów po terminie: 4 mignięcia × 1,2 s ≈ 5 s, potem wpis zostaje wyróżniony.
+     Limit 5 s wynika z WCAG 2.2.2. Aby migało bez końca, wpisz: infinite */
+  --miganie-czas: 1.2s;
+  --miganie-powtorzenia: 4;
 }
 
 * { box-sizing: border-box; }
@@ -141,6 +147,7 @@ main { flex: 1; padding: var(--spacing-xxxl) 0 var(--spacing-xxxxl); }
 .cal-head__nav { display: flex; gap: var(--spacing-xs); flex-wrap: wrap; }
 .cal-summary { margin: var(--spacing-xs) 0 0; color: var(--color-text); }
 .cal-summary strong { color: var(--color-primary); }
+.cal-summary .is-danger { color: var(--a11y-danger-text); font-weight: 600; }
 
 .calendar { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .calendar th { font-size: var(--text-sm); font-weight: 400; text-transform: uppercase; letter-spacing: .04em; text-align: left; padding: var(--spacing-xs) var(--spacing-sm); color: var(--color-text); border-bottom: 1px solid var(--color-border); }
@@ -159,18 +166,32 @@ main { flex: 1; padding: var(--spacing-xxxl) 0 var(--spacing-xxxxl); }
 .day.is-today .day__num { background: var(--color-primary); color: #fff; font-weight: 600; }
 .day.is-weekend .day__num { color: var(--a11y-muted); }
 .day.is-today.is-weekend .day__num { color: #fff; }
-.chip { display: flex; align-items: center; gap: 4px; padding: 2px 6px; font-size: var(--text-sm); line-height: 1.35; background: var(--color-sand); border-left: 3px solid var(--color-primary); white-space: nowrap; overflow: hidden; }
+.chip { display: flex; align-items: center; gap: 4px; padding: 2px 6px; font-size: var(--text-sm); line-height: 1.35; background: var(--color-sand); color: var(--color-text); border-left: 3px solid var(--color-primary); white-space: nowrap; overflow: hidden; }
 .chip > span { overflow: hidden; text-overflow: ellipsis; }
 .chip svg { flex: none; }
-.chip.is-overdue { border-left-color: var(--a11y-danger-text); background: #FBEAE8; }
 .chip.is-task { background: var(--color-bg); border: 1px solid var(--color-primary); padding: 1px 5px; }
+.chip.is-overdue { border-color: var(--a11y-danger-text); background: var(--a11y-danger-bg); }
 .chip--more { background: transparent; border-left-color: transparent; padding-left: 9px; text-decoration: underline; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* Miganie wpisów po terminie */
+@keyframes miganie {
+  0%, 100% { background: var(--a11y-danger-bg); color: var(--color-text); }
+  50%      { background: var(--a11y-danger-text); color: #fff; }
+}
+@keyframes miganie-kropka {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .15; }
+}
+.chip.is-overdue { animation: miganie var(--miganie-czas) ease-in-out var(--miganie-powtorzenia); }
+@media (prefers-reduced-motion: reduce) {
+  .chip.is-overdue, .day.has-overdue::after { animation: none !important; }
+}
 
 .legend { display: flex; flex-wrap: wrap; gap: var(--spacing-lg); margin-top: var(--spacing-md); font-size: var(--text-sm); }
 .legend span { display: inline-flex; align-items: center; gap: var(--spacing-xs); }
 .legend i { display: inline-block; width: 14px; height: 14px; background: var(--color-sand); border-left: 3px solid var(--color-primary); }
-.legend i.is-overdue { background: #FBEAE8; border-left-color: var(--a11y-danger-text); }
+.legend i.is-overdue { background: var(--a11y-danger-bg); border-left-color: var(--a11y-danger-text); }
 .legend i.is-today { background: var(--color-primary); border: 0; }
 .legend i.is-task { background: var(--color-bg); border: 1px solid var(--color-primary); }
 
@@ -199,7 +220,7 @@ main { flex: 1; padding: var(--spacing-xxxl) 0 var(--spacing-xxxxl); }
 
 .sample-note { margin-top: var(--spacing-xl); font-size: var(--text-sm); color: var(--a11y-muted); max-width: 760px; }
 
-/* --- Ekran: formularz zadania --- */
+/* --- Ekrany: formularze (nowe zadanie, przeplanowanie) --- */
 .form { max-width: 560px; }
 .form h1 { font-size: var(--text-xxxl); margin-bottom: var(--spacing-xs); }
 .form__intro { margin: 0 0 var(--spacing-xl); }
@@ -220,6 +241,10 @@ main { flex: 1; padding: var(--spacing-xxxl) 0 var(--spacing-xxxxl); }
 .date-row { display: flex; gap: var(--spacing-xs); margin-bottom: var(--spacing-xs); }
 .date-row .input { flex: 1; }
 .form__actions { display: flex; gap: var(--spacing-sm); flex-wrap: wrap; padding-top: var(--spacing-md); border-top: 1px solid var(--color-border); }
+.task-card { padding: var(--spacing-md) var(--spacing-lg); background: var(--color-sand); margin-bottom: var(--spacing-xl); }
+.task-card__name { font-size: var(--text-xl); font-weight: 600; color: var(--color-primary); margin: 0 0 var(--spacing-xxs); }
+.task-card p { margin: 0; }
+.task-card ul { margin: var(--spacing-xs) 0 0; padding-left: 1.25rem; }
 
 /* --- Ekran: mapa --- */
 .map h1 { font-size: var(--text-xxxl); margin-bottom: var(--spacing-xs); }
@@ -252,7 +277,7 @@ main { flex: 1; padding: var(--spacing-xxxl) 0 var(--spacing-xxxxl); }
   .calendar td, .day { height: 64px; min-height: 64px; }
   .chip { display: none; }
   .day.has-items::after { content: ""; display: block; width: 8px; height: 8px; background: var(--color-primary); }
-  .day.has-overdue::after { background: var(--a11y-danger-text); }
+  .day.has-overdue::after { background: var(--a11y-danger-text); animation: miganie-kropka var(--miganie-czas) ease-in-out var(--miganie-powtorzenia); }
   .invoice { grid-template-columns: 1fr; }
   .inbox-status span { display: none; }
 }
@@ -264,7 +289,7 @@ main { flex: 1; padding: var(--spacing-xxxl) 0 var(--spacing-xxxxl); }
   <div class="app-header__inner">
     <a class="brand" href="#kalendarz">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-      Kalendarz faktur
+      Kalendarz zadań
     </a>
     <div class="inbox-status" title="Połączona skrzynka pocztowa">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="14"/><path d="m3 6 9 7 9-7"/></svg>
@@ -290,31 +315,36 @@ main { flex: 1; padding: var(--spacing-xxxl) 0 var(--spacing-xxxxl); }
 <script>
 /* =========================================================
    DANE PRZYKŁADOWE — tu możesz podmienić treści na własne
+   Daty w formacie RRRR-MM-DD.
    ========================================================= */
 const DANE = {
   skrzynka: 'jan.przykladowy@poczta.example',
-  dzis: { rok: 2026, miesiac: 11, dzien: 10 },   // miesiąc: 1–12
+  dzis: '2026-11-10',
+  // Faktury, które przyszły mailem (termin = termin płatności)
   faktury: [
-    { id: 1, dzien: 5,  dostawca: 'Falanet',            email: 'faktury@falanet.example',            opis: 'Faktura za internet – listopad 2026, 79,99 zł' },
-    { id: 2, dzien: 8,  dostawca: 'Mobilia',            email: 'e-faktura@mobilia.example',          opis: 'Abonament za telefon komórkowy – październik 2026, 49,00 zł' },
-    { id: 3, dzien: 12, dostawca: 'Volta Energia',      email: 'rozliczenia@voltaenergia.example',   opis: 'Prąd – prognoza na listopad 2026, 186,40 zł' },
-    { id: 4, dzien: 12, dostawca: 'AquaMiasto',         email: 'bok@aquamiasto.example',             opis: 'Woda i ścieki – październik 2026, 92,15 zł' },
-    { id: 5, dzien: 16, dostawca: 'Gazovia',            email: 'faktury@gazovia.example',            opis: 'Gaz – rozliczenie za wrzesień i październik 2026, 214,70 zł' },
-    { id: 6, dzien: 20, dostawca: 'Domostrefa Ubezpieczenia', email: 'polisy@domostrefa.example',    opis: 'Rata ubezpieczenia mieszkania – IV kwartał 2026, 63,00 zł' },
-    { id: 7, dzien: 25, dostawca: 'Osiedle Pod Lipami', email: 'administracja@podlipami.example',    opis: 'Opłata eksploatacyjna za mieszkanie – grudzień 2026, 412,30 zł' },
-    { id: 8, dzien: 25, dostawca: 'Lingwista',          email: 'faktury@lingwista.example',          opis: 'Kurs angielskiego online – grudzień 2026, 120,00 zł' },
-    { id: 9, dzien: 28, dostawca: 'Serwerownia',        email: 'billing@serwerownia.example',        opis: 'Domena i hosting – odnowienie na rok, 249,00 zł' }
+    { id: 1, termin: '2026-11-05', dostawca: 'Falanet',            email: 'faktury@falanet.example',          opis: 'Faktura za internet – listopad 2026, 79,99 zł' },
+    { id: 2, termin: '2026-11-08', dostawca: 'Mobilia',            email: 'e-faktura@mobilia.example',        opis: 'Abonament za telefon komórkowy – październik 2026, 49,00 zł' },
+    { id: 3, termin: '2026-11-12', dostawca: 'Volta Energia',      email: 'rozliczenia@voltaenergia.example', opis: 'Prąd – prognoza na listopad 2026, 186,40 zł' },
+    { id: 4, termin: '2026-11-12', dostawca: 'AquaMiasto',         email: 'bok@aquamiasto.example',           opis: 'Woda i ścieki – październik 2026, 92,15 zł' },
+    { id: 5, termin: '2026-11-16', dostawca: 'Gazovia',            email: 'faktury@gazovia.example',          opis: 'Gaz – rozliczenie za wrzesień i październik 2026, 214,70 zł' },
+    { id: 6, termin: '2026-11-20', dostawca: 'Domostrefa Ubezpieczenia', email: 'polisy@domostrefa.example',  opis: 'Rata ubezpieczenia mieszkania – IV kwartał 2026, 63,00 zł' },
+    { id: 7, termin: '2026-11-25', dostawca: 'Osiedle Pod Lipami', email: 'administracja@podlipami.example',  opis: 'Opłata eksploatacyjna za mieszkanie – grudzień 2026, 412,30 zł' },
+    { id: 8, termin: '2026-11-25', dostawca: 'Lingwista',          email: 'faktury@lingwista.example',        opis: 'Kurs angielskiego online – grudzień 2026, 120,00 zł' },
+    { id: 9, termin: '2026-11-28', dostawca: 'Serwerownia',        email: 'billing@serwerownia.example',      opis: 'Domena i hosting – odnowienie na rok, 249,00 zł' }
   ],
-  // Zadania dodane ręcznie. Terminy w formacie RRRR-MM-DD; kilka terminów = harmonogram.
+  // Zadania dodane ręcznie. Kilka terminów = harmonogram.
   zadania: [
-    { id: 1, nazwa: 'Odczyt licznika gazu', terminy: ['2026-11-13', '2027-01-15'] }
+    { id: 1, nazwa: 'Zwrot książek do biblioteki', terminy: ['2026-11-09'] },
+    { id: 2, nazwa: 'Odczyt licznika gazu',        terminy: ['2026-11-13', '2027-01-15'] }
   ],
   scenariusze: [
     'A. Opłać fakturę: kalendarz → dzień z fakturami → oznacz jedną jako opłaconą → wróć do kalendarza i sprawdź, że jej nie ma.',
     'B. Znajdź konkretną fakturę: w kalendarzu odszukaj fakturę za gaz lub prąd i sprawdź, kto ją przysłał i na jaką kwotę.',
-    'C. Dzień bez faktur: kliknij dzień bez oznaczeń → zobacz komunikat → wróć do kalendarza.',
-    'D. Dodaj zadanie z harmonogramem: kalendarz → dodaj zadanie → wpisz nazwę i kilka terminów (np. wywóz śmieci 17 listopada, 21 grudnia) → zadanie widoczne w kalendarzu.',
-    'E. Odhacz zadanie: dzień z zadaniem → oznacz jako zrobione → zadanie znika (można cofnąć).'
+    'C. Dzień bez wpisów: kliknij dzień bez oznaczeń → zobacz komunikat → wróć do kalendarza.',
+    'D. Dodaj zadanie z harmonogramem: kalendarz → dodaj zadanie → wpisz nazwę i kilka terminów (np. wywóz śmieci 17 listopada, 21 grudnia) → przejdź do grudnia i sprawdź termin.',
+    'E. Odhacz zadanie: dzień z zadaniem → oznacz jako zrobione → zadanie znika (można cofnąć).',
+    'F. Przeplanuj zadanie: dzień z zadaniem → przeplanuj → wybierz nowy dzień → zadanie widoczne w nowym dniu (można cofnąć).',
+    'G. Zaległości: po otwarciu kalendarza zauważ migające wpisy po terminie (faktury 5 i 8 listopada, zadanie 9 listopada).'
   ],
   teksty: {
     pozaZakresem: 'Ta funkcja nie jest częścią prototypu.',
@@ -322,8 +352,13 @@ const DANE = {
     zrobione: 'Zadanie oznaczone jako zrobione.',
     przywrocona: 'Przywrócono fakturę do opłacenia.',
     przywrocone: 'Przywrócono zadanie.',
+    cofnietoPrzeniesienie: 'Przywrócono poprzedni termin',
     bladNazwa: 'Wpisz nazwę zadania.',
-    bladTermin: 'Wybierz co najmniej jeden termin.'
+    bladTermin: 'Wybierz co najmniej jeden termin.',
+    bladNowyTerminPusty: 'Wybierz nowy termin.',
+    bladNowyTerminTenSam: 'Wybierz inny dzień niż obecny termin.',
+    bladNowyTerminZajety: 'To zadanie ma już termin w tym dniu.',
+    bladNowyTerminPrzeszly: 'Nowy termin nie może być wcześniejszy niż dzisiaj.'
   }
 };
 
@@ -334,43 +369,46 @@ const stan = {
   oplacone: new Set(),     // id opłaconych faktur
   zrobione: new Set(),     // klucze "idZadania|RRRR-MM-DD" zrobionych terminów
   zadania: DANE.zadania.map(z => ({ ...z, terminy: [...z.terminy] })),
-  nastepneIdZadania: DANE.zadania.length + 1,
-  ostatnio: null           // { typ: 'faktura' | 'zadanie', klucz }
+  nastepneIdZadania: Math.max(0, ...DANE.zadania.map(z => z.id)) + 1,
+  ostatnio: null           // ostatnia akcja do cofnięcia
 };
 
-/* Pomocnicze */
+/* =========================================================
+   POMOCNICZE (daty, odmiana, ikony)
+   ========================================================= */
 const MIESIACE = ['styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec','sierpień','wrzesień','październik','listopad','grudzień'];
 const MIESIACE_DOP = ['stycznia','lutego','marca','kwietnia','maja','czerwca','lipca','sierpnia','września','października','listopada','grudnia'];
 const DNI_TYG = ['niedziela','poniedziałek','wtorek','środa','czwartek','piątek','sobota'];
 const DNI_KROTKO = ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'];
 const DNI_DLUGO = ['poniedziałek','wtorek','środa','czwartek','piątek','sobota','niedziela'];
 
-const { rok, miesiac, dzien: dzisDzien } = DANE.dzis;
-const liczbaDni = new Date(rok, miesiac, 0).getDate();
+const DZIS = DANE.dzis;
 const pad = n => String(n).padStart(2, '0');
-const dataISO = d => `${rok}-${pad(miesiac)}-${pad(d)}`;
-const dataSlownie = iso => { const [r, m, d] = iso.split('-').map(Number); return `${d} ${MIESIACE_DOP[m - 1]}${r !== rok ? ' ' + r : ''}`; };
+const rozbij = s => s.split('-').map(Number);
+const iso = (r, m, d) => `${r}-${pad(m)}-${pad(d)}`;
+const kluczMies = (r, m) => `${r}-${pad(m)}`;
+const [DZIS_R, DZIS_M] = rozbij(DZIS);
+const DZIS_MIES = kluczMies(DZIS_R, DZIS_M);
+const dniWMiesiacu = (r, m) => new Date(r, m, 0).getDate();
+const przesunMiesiac = (r, m, o) => { const dt = new Date(r, m - 1 + o, 1); return [dt.getFullYear(), dt.getMonth() + 1]; };
+const poprawnaData = s => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const [r, m, d] = rozbij(s);
+  return m >= 1 && m <= 12 && d >= 1 && d <= dniWMiesiacu(r, m);
+};
+const wielka = t => t.charAt(0).toUpperCase() + t.slice(1);
+const nazwaMiesiaca = (r, m) => `${wielka(MIESIACE[m - 1])} ${r}`;
+const dataSlownie = s => { const [r, m, d] = rozbij(s); return `${d} ${MIESIACE_DOP[m - 1]}${r !== DZIS_R ? ' ' + r : ''}`; };
+const nazwaDnia = s => { const [r, m, d] = rozbij(s); return `${wielka(DNI_TYG[new Date(r, m - 1, d).getDay()])}, ${d} ${MIESIACE_DOP[m - 1]} ${r}`; };
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const nieoplacone = () => DANE.faktury.filter(f => !stan.oplacone.has(f.id));
-const fakturyDnia = d => nieoplacone().filter(f => f.dzien === d);
-const zadaniaDnia = d => stan.zadania
-  .filter(z => z.terminy.includes(dataISO(d)) && !stan.zrobione.has(z.id + '|' + dataISO(d)));
-const zadaniaWMiesiacu = () => {
-  let n = 0;
-  for (let d = 1; d <= liczbaDni; d++) n += zadaniaDnia(d).length;
-  return n;
-};
-const poTerminie = f => f.dzien < dzisDzien;
+const poTerminie = s => s < DZIS;
+const fakturyDnia = s => DANE.faktury.filter(f => f.termin === s && !stan.oplacone.has(f.id));
+const zadaniaDnia = s => stan.zadania.filter(z => z.terminy.includes(s) && !stan.zrobione.has(z.id + '|' + s));
 const odmiana = (n, jeden, kilka, wiele) => n === 1 ? jeden : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? kilka : wiele;
 const odmianaFaktur = n => odmiana(n, 'faktura', 'faktury', 'faktur');
 const odmianaZadan = n => odmiana(n, 'zadanie', 'zadania', 'zadań');
 const odmianaTerminow = n => odmiana(n, 'termin', 'terminy', 'terminów');
-const nazwaDnia = d => {
-  const data = new Date(rok, miesiac - 1, d);
-  const t = DNI_TYG[data.getDay()];
-  return t.charAt(0).toUpperCase() + t.slice(1) + ', ' + d + ' ' + MIESIACE_DOP[miesiac - 1] + ' ' + rok;
-};
 
 const IKONY = {
   wstecz: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
@@ -378,6 +416,7 @@ const IKONY = {
   ok: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   plus: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
   usun: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  przenies: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4M9 15.5h6M13 13l2.5 2.5L13 18"/></svg>',
   blad: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>',
   zadanie: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><path d="M8 12l3 3 5-6"/></svg>',
   mail: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="14"/><path d="m3 6 9 7 9-7"/></svg>',
@@ -389,37 +428,44 @@ const IKONY = {
    ========================================================= */
 
 /* Ekran 1 / 3: Kalendarz miesięczny */
-function ekranKalendarz() {
-  const lista = nieoplacone();
-  const poTerm = lista.filter(poTerminie).length;
-  const ileZadan = zadaniaWMiesiacu();
-  const pierwszyDzienTyg = (new Date(rok, miesiac - 1, 1).getDay() + 6) % 7; // 0 = poniedziałek
+function ekranKalendarz(r, m) {
+  const km = kluczMies(r, m);
+  const n = dniWMiesiacu(r, m);
+  const pierwszyDzienTyg = (new Date(r, m - 1, 1).getDay() + 6) % 7; // 0 = poniedziałek
+  let ileFaktur = 0, ileZadan = 0, ilePoTerminie = 0;
 
-  let komorki = [];
+  const komorki = [];
   for (let i = 0; i < pierwszyDzienTyg; i++) komorki.push('<td class="is-empty"></td>');
-  for (let d = 1; d <= liczbaDni; d++) {
-    const fakt = fakturyDnia(d);
-    const zad = zadaniaDnia(d);
+  for (let d = 1; d <= n; d++) {
+    const s = iso(r, m, d);
+    const fakt = fakturyDnia(s);
+    const zad = zadaniaDnia(s);
+    const zalegle = poTerminie(s);
+    ileFaktur += fakt.length; ileZadan += zad.length;
+    if (zalegle) ilePoTerminie += fakt.length + zad.length;
+
     const dzienTyg = (pierwszyDzienTyg + d - 1) % 7;
     const klasy = ['day'];
-    if (d === dzisDzien) klasy.push('is-today');
+    if (s === DZIS) klasy.push('is-today');
     if (dzienTyg >= 5) klasy.push('is-weekend');
     if (fakt.length || zad.length) klasy.push('has-items');
-    if (fakt.some(poTerminie)) klasy.push('has-overdue');
+    if (zalegle && (fakt.length || zad.length)) klasy.push('has-overdue');
 
+    const zal = zalegle ? ' is-overdue' : '';
     const wpisy = [
-      ...fakt.map(f => `<span class="chip${poTerminie(f) ? ' is-overdue' : ''}"><span>${esc(f.dostawca)}</span></span>`),
-      ...zad.map(z => `<span class="chip is-task">${IKONY.zadanie}<span>${esc(z.nazwa)}</span></span>`)
+      ...fakt.map(f => `<span class="chip${zal}"><span>${esc(f.dostawca)}</span></span>`),
+      ...zad.map(z => `<span class="chip is-task${zal}">${IKONY.zadanie}<span>${esc(z.nazwa)}</span></span>`)
     ];
     const chipy = wpisy.slice(0, 2).join('') +
       (wpisy.length > 2 ? `<span class="chip chip--more"><span>+${wpisy.length - 2} więcej</span></span>` : '');
 
     const czesci = [];
-    if (fakt.length) czesci.push(`${fakt.length} ${odmianaFaktur(fakt.length)} do opłacenia${fakt.some(poTerminie) ? ', po terminie' : ''}`);
+    if (fakt.length) czesci.push(`${fakt.length} ${odmianaFaktur(fakt.length)} do opłacenia`);
     if (zad.length) czesci.push(`${zad.length} ${odmianaZadan(zad.length)}`);
-    const opisSr = `${d} ${MIESIACE_DOP[miesiac - 1]}${d === dzisDzien ? ', dzisiaj' : ''}: ` + (czesci.length ? czesci.join(', ') : 'nic zaplanowanego');
+    if (zalegle && czesci.length) czesci.push('po terminie');
+    const opisSr = `${d} ${MIESIACE_DOP[m - 1]}${s === DZIS ? ', dzisiaj' : ''}: ` + (czesci.length ? czesci.join(', ') : 'nic zaplanowanego');
 
-    komorki.push(`<td><a class="${klasy.join(' ')}" href="#dzien-${d}" aria-label="${opisSr}">
+    komorki.push(`<td><a class="${klasy.join(' ')}" href="#dzien-${s}" aria-label="${opisSr}">
       <span class="day__num">${d}</span>${chipy}</a></td>`);
   }
   while (komorki.length % 7) komorki.push('<td class="is-empty"></td>');
@@ -427,24 +473,39 @@ function ekranKalendarz() {
   let wiersze = '';
   for (let i = 0; i < komorki.length; i += 7) wiersze += '<tr>' + komorki.slice(i, i + 7).join('') + '</tr>';
 
-  const czesciPods = [];
-  czesciPods.push(lista.length ? `Do opłacenia: <strong>${lista.length} ${odmianaFaktur(lista.length)}</strong>` : 'Faktury: wszystkie opłacone');
-  if (poTerm) czesciPods.push(`<span style="color:var(--a11y-danger-text)">${poTerm} po terminie</span>`);
-  if (ileZadan) czesciPods.push(`Twoje zadania: <strong>${ileZadan}</strong>`);
-  if (stan.oplacone.size) czesciPods.push(`Opłacone w tym miesiącu: ${stan.oplacone.size}`);
+  const fakturyMiesiaca = DANE.faktury.filter(f => f.termin.startsWith(km));
+  const oplaconeMiesiaca = fakturyMiesiaca.filter(f => stan.oplacone.has(f.id)).length;
+
+  const pods = [];
+  if (fakturyMiesiaca.length) pods.push(ileFaktur ? `Faktury do opłacenia: <strong>${ileFaktur}</strong>` : 'Faktury: wszystkie opłacone');
+  else pods.push('Brak faktur z poczty');
+  pods.push(`Twoje zadania: <strong>${ileZadan}</strong>`);
+  if (ilePoTerminie) pods.push(`<span class="is-danger">Po terminie: ${ilePoTerminie}</span>`);
+  if (oplaconeMiesiaca) pods.push(`Opłacone w tym miesiącu: ${oplaconeMiesiaca}`);
+
+  let baner = '';
+  if (fakturyMiesiaca.length && !ileFaktur) {
+    baner = `<div class="banner banner--success" role="status">${IKONY.ok}<strong>Wszystko opłacone. W tym miesiącu nie masz już faktur do zapłaty.</strong></div>`;
+  } else if (!fakturyMiesiaca.length && km > DZIS_MIES) {
+    baner = `<div class="banner">${IKONY.mail}<span>Faktury na ten miesiąc jeszcze nie przyszły. Pojawią się tu same, gdy dostaniesz je mailem.</span></div>`;
+  }
+
+  const [pr, pm] = przesunMiesiac(r, m, -1);
+  const [nr, nm] = przesunMiesiac(r, m, 1);
 
   return `
   <div class="page">
-    ${lista.length ? '' : `<div class="banner banner--success" role="status">${IKONY.ok}<strong>Wszystko opłacone. W tym miesiącu nie masz już faktur do zapłaty.</strong></div>`}
+    ${baner}
     <div class="cal-head">
       <div>
-        <h1 tabindex="-1">${MIESIACE[miesiac - 1].charAt(0).toUpperCase() + MIESIACE[miesiac - 1].slice(1)} ${rok}</h1>
-        <p class="cal-summary">${czesciPods.join(' · ')}</p>
+        <h1 tabindex="-1">${nazwaMiesiaca(r, m)}</h1>
+        <p class="cal-summary">${pods.join(' · ')}</p>
       </div>
       <div class="cal-head__nav">
         <a class="btn btn--primary" href="#dodaj-zadanie">${IKONY.plus}Dodaj zadanie</a>
-        <button class="btn btn--icon" type="button" data-poza-zakresem aria-label="Poprzedni miesiąc">${IKONY.wstecz}</button>
-        <button class="btn btn--icon" type="button" data-poza-zakresem aria-label="Następny miesiąc">${IKONY.dalej}</button>
+        ${km !== DZIS_MIES ? '<a class="btn btn--secondary" href="#kalendarz">Dzisiaj</a>' : ''}
+        <a class="btn btn--icon" href="#kalendarz-${kluczMies(pr, pm)}" aria-label="Poprzedni miesiąc: ${MIESIACE[pm - 1]} ${pr}" title="${wielka(MIESIACE[pm - 1])} ${pr}">${IKONY.wstecz}</a>
+        <a class="btn btn--icon" href="#kalendarz-${kluczMies(nr, nm)}" aria-label="Następny miesiąc: ${MIESIACE[nm - 1]} ${nr}" title="${wielka(MIESIACE[nm - 1])} ${nr}">${IKONY.dalej}</a>
       </div>
     </div>
     <table class="calendar">
@@ -455,18 +516,20 @@ function ekranKalendarz() {
     <div class="legend" aria-hidden="true">
       <span><i class="is-today"></i>Dzisiaj</span>
       <span><i></i>Faktura z poczty (termin płatności)</span>
-      <span><i class="is-overdue"></i>Faktura po terminie</span>
       <span><i class="is-task"></i>Twoje zadanie</span>
+      <span><i class="is-overdue"></i>Po terminie</span>
     </div>
   </div>`;
 }
 
 /* Ekran 2: Szczegóły dnia */
-function ekranDzien(d) {
-  const fakt = fakturyDnia(d);
-  const zad = zadaniaDnia(d);
-  const iso = dataISO(d);
-  const cokolwiekBylo = DANE.faktury.some(f => f.dzien === d) || stan.zadania.some(z => z.terminy.includes(iso));
+function ekranDzien(s) {
+  const fakt = fakturyDnia(s);
+  const zad = zadaniaDnia(s);
+  const zalegle = poTerminie(s);
+  const [r, m] = rozbij(s);
+  const cokolwiekBylo = DANE.faktury.some(f => f.termin === s) || stan.zadania.some(z => z.terminy.includes(s));
+  const plakietkaZal = zalegle ? '<span class="badge badge--danger">Po terminie</span>' : '';
   let tresc = '';
 
   if (fakt.length) {
@@ -476,7 +539,7 @@ function ekranDzien(d) {
         ${fakt.map(f => `
         <li class="invoice">
           <div>
-            <div class="invoice__provider">${esc(f.dostawca)}${poTerminie(f) ? '<span class="badge badge--danger">Po terminie</span>' : ''}</div>
+            <div class="invoice__provider">${esc(f.dostawca)}${plakietkaZal}</div>
             <p class="invoice__desc">${esc(f.opis)}</p>
             <p class="invoice__from">Od: ${esc(f.email)}</p>
           </div>
@@ -493,19 +556,19 @@ function ekranDzien(d) {
       <h2 class="section-title">Twoje zadania</h2>
       <ul class="invoice-list">
         ${zad.map(z => {
-          const pozostale = z.terminy.filter(t => t !== iso).sort();
-          const nastepny = pozostale.find(t => t > iso);
+          const nastepny = z.terminy.filter(t => t > s).sort()[0];
           const harmonogram = z.terminy.length > 1
             ? `Harmonogram: ${z.terminy.length} ${odmianaTerminow(z.terminy.length)}${nastepny ? ` · następny: ${dataSlownie(nastepny)}` : ''}`
             : 'Jednorazowe';
           return `
         <li class="invoice">
           <div>
-            <div class="invoice__provider">${esc(z.nazwa)}<span class="badge badge--outline">Twoje zadanie</span></div>
+            <div class="invoice__provider">${esc(z.nazwa)}<span class="badge badge--outline">Twoje zadanie</span>${plakietkaZal}</div>
             <p class="invoice__from">${harmonogram}</p>
           </div>
           <div class="invoice__actions">
-            <button class="btn btn--primary" type="button" data-zrobione="${z.id}|${iso}">${IKONY.ok}Oznacz jako zrobione</button>
+            <button class="btn btn--primary" type="button" data-zrobione="${z.id}|${s}">${IKONY.ok}Oznacz jako zrobione</button>
+            <a class="btn btn--ghost" href="#przeplanuj-${z.id}-${s}">${IKONY.przenies}Przeplanuj</a>
           </div>
         </li>`;
         }).join('')}
@@ -518,15 +581,15 @@ function ekranDzien(d) {
         ${IKONY.pusto}
         <h2>Wszystko z tego dnia jest załatwione</h2>
         <p>Opłacone faktury i zrobione zadania nie znikły — po prostu nie musisz już o nich pamiętać.</p>
-        <div class="empty__actions"><a class="btn btn--primary" href="#kalendarz">Wróć do kalendarza</a></div>
+        <div class="empty__actions"><a class="btn btn--primary" href="#kalendarz-${kluczMies(r, m)}">Wróć do kalendarza</a></div>
       </div>` : `
       <div class="empty">
         ${IKONY.pusto}
         <h2>Nic zaplanowanego na ten dzień</h2>
         <p>Nie przyszła żadna faktura z terminem płatności na ten dzień i nie masz tu żadnych zadań.</p>
         <div class="empty__actions">
-          <a class="btn btn--primary" href="#kalendarz">Wróć do kalendarza</a>
-          <a class="btn btn--secondary" href="#dodaj-zadanie-${d}">${IKONY.plus}Dodaj zadanie na ten dzień</a>
+          <a class="btn btn--primary" href="#kalendarz-${kluczMies(r, m)}">Wróć do kalendarza</a>
+          <a class="btn btn--secondary" href="#dodaj-zadanie-${s}">${IKONY.plus}Dodaj zadanie na ten dzień</a>
         </div>
       </div>`;
   }
@@ -534,17 +597,17 @@ function ekranDzien(d) {
   const czesci = [];
   if (fakt.length) czesci.push(`${fakt.length} ${odmianaFaktur(fakt.length)} z terminem płatności w tym dniu`);
   if (zad.length) czesci.push(`${zad.length} ${odmianaZadan(zad.length)}`);
-  const podtytul = czesci.length ? czesci.join(' · ') : (d === dzisDzien ? 'Dzisiaj' : '&nbsp;');
+  const podtytul = czesci.length ? czesci.join(' · ') : (s === DZIS ? 'Dzisiaj' : '&nbsp;');
 
   return `
   <div class="page">
-    <a class="btn btn--ghost back" href="#kalendarz">${IKONY.wstecz}Kalendarz</a>
+    <a class="btn btn--ghost back" href="#kalendarz-${kluczMies(r, m)}">${IKONY.wstecz}Kalendarz: ${MIESIACE[m - 1]} ${r}</a>
     <div class="day-head">
       <div>
-        <h1 tabindex="-1">${nazwaDnia(d)}</h1>
+        <h1 tabindex="-1">${nazwaDnia(s)}</h1>
         <p>${podtytul}</p>
       </div>
-      ${(fakt.length || zad.length) ? `<a class="btn btn--secondary" href="#dodaj-zadanie-${d}">${IKONY.plus}Dodaj zadanie na ten dzień</a>` : ''}
+      ${(fakt.length || zad.length) ? `<a class="btn btn--secondary" href="#dodaj-zadanie-${s}">${IKONY.plus}Dodaj zadanie na ten dzień</a>` : ''}
     </div>
     ${tresc}
     ${fakt.length ? '<p class="sample-note">Faktury, dostawcy i adresy e-mail w prototypie są wymyślone.</p>' : ''}
@@ -559,11 +622,11 @@ function wierszTerminu(wartosc, moznaUsunac, nr) {
   </div>`;
 }
 
-function ekranDodajZadanie(d) {
-  const domyslny = d ? dataISO(d) : '';
+function ekranDodajZadanie(s) {
+  const powrot = s ? '#dzien-' + s : '#kalendarz';
   return `
   <div class="page">
-    <a class="btn btn--ghost back" href="${d ? '#dzien-' + d : '#kalendarz'}">${IKONY.wstecz}${d ? 'Wróć do dnia' : 'Kalendarz'}</a>
+    <a class="btn btn--ghost back" href="${powrot}">${IKONY.wstecz}${s ? 'Wróć do dnia' : 'Kalendarz'}</a>
     <form class="form" id="form-zadanie" novalidate>
       <h1 tabindex="-1">Nowe zadanie</h1>
       <p class="form__intro">Dodaj do kalendarza coś, o czym nie chcesz pamiętać. Pojawi się obok faktur z poczty.</p>
@@ -578,7 +641,7 @@ function ekranDodajZadanie(d) {
         <fieldset>
           <legend>Terminy</legend>
           <p class="field__hint">Jeśli zadanie się powtarza, ale w różne dni (np. według harmonogramu wywozu śmieci), dodaj każdy termin osobno.</p>
-          <div id="terminy">${wierszTerminu(domyslny, false, 1)}</div>
+          <div id="terminy">${wierszTerminu(s, false, 1)}</div>
           <button class="btn btn--ghost" type="button" id="dodaj-termin">${IKONY.plus}Dodaj kolejny termin</button>
           <p class="field__error" id="blad-termin" hidden>${IKONY.blad}<span>${DANE.teksty.bladTermin}</span></p>
         </fieldset>
@@ -586,7 +649,37 @@ function ekranDodajZadanie(d) {
 
       <div class="form__actions">
         <button class="btn btn--primary" type="submit">Zapisz zadanie</button>
-        <a class="btn btn--ghost" href="${d ? '#dzien-' + d : '#kalendarz'}">Anuluj</a>
+        <a class="btn btn--ghost" href="${powrot}">Anuluj</a>
+      </div>
+    </form>
+  </div>`;
+}
+
+/* Ekran 5: Przeplanowanie zadania (jeden termin) */
+function ekranPrzeplanuj(z, s) {
+  const pozostale = z.terminy.filter(t => t !== s).sort();
+  return `
+  <div class="page">
+    <a class="btn btn--ghost back" href="#dzien-${s}">${IKONY.wstecz}Wróć do dnia</a>
+    <form class="form" id="form-przeplanuj" data-zadanie="${z.id}" data-termin="${s}" novalidate>
+      <h1 tabindex="-1">Przeplanuj zadanie</h1>
+      <div class="task-card">
+        <p class="task-card__name">${esc(z.nazwa)}</p>
+        <p>Obecny termin: <strong>${nazwaDnia(s)}</strong>${poTerminie(s) ? ' <span class="badge badge--danger">Po terminie</span>' : ''}</p>
+        ${pozostale.length ? `<p style="margin-top:var(--spacing-xs)">Pozostałe terminy z harmonogramu się nie zmienią:</p>
+        <ul>${pozostale.map(t => `<li>${dataSlownie(t)}</li>`).join('')}</ul>` : ''}
+      </div>
+
+      <div class="field">
+        <label for="nowy-termin">Nowy termin</label>
+        <p class="field__hint">Możesz wybrać dzień także w innym miesiącu.</p>
+        <input class="input" id="nowy-termin" name="nowy" type="date" min="${DZIS}" value="${poTerminie(s) ? '' : s}" aria-describedby="blad-nowy">
+        <p class="field__error" id="blad-nowy" hidden>${IKONY.blad}<span></span></p>
+      </div>
+
+      <div class="form__actions">
+        <button class="btn btn--primary" type="submit">Zapisz nowy termin</button>
+        <a class="btn btn--ghost" href="#dzien-${s}">Anuluj</a>
       </div>
     </form>
   </div>`;
@@ -594,28 +687,35 @@ function ekranDodajZadanie(d) {
 
 /* Ekran pomocniczy: mapa ekranów (tylko dla twórcy i moderatora) */
 function ekranMapa() {
-  const dniZFakturami = [...new Set(DANE.faktury.map(f => f.dzien))].sort((a, b) => a - b);
-  const dniZZadaniami = [...new Set(stan.zadania.flatMap(z => z.terminy)
-    .filter(t => t.startsWith(`${rok}-${pad(miesiac)}`)).map(t => +t.slice(8)))].sort((a, b) => a - b);
-  const pustyDzien = [...Array(liczbaDni).keys()].map(i => i + 1).find(d => !dniZFakturami.includes(d) && !dniZZadaniami.includes(d));
+  const dniFaktur = [...new Set(DANE.faktury.map(f => f.termin))].sort();
+  const dniZadan = [...new Set(stan.zadania.flatMap(z => z.terminy))].sort();
+  const n = dniWMiesiacu(DZIS_R, DZIS_M);
+  let pustyDzien = null;
+  for (let d = 1; d <= n && !pustyDzien; d++) {
+    const s = iso(DZIS_R, DZIS_M, d);
+    if (!dniFaktur.includes(s) && !dniZadan.includes(s)) pustyDzien = s;
+  }
+  const miesiace = [0, 1, 2].map(o => przesunMiesiac(DZIS_R, DZIS_M, o));
+  const przyklad = stan.zadania.flatMap(z => z.terminy.filter(t => !poTerminie(t)).map(t => [z.id, t]))[0];
   return `
   <div class="page map">
     <h1 tabindex="-1">Mapa prototypu</h1>
-    <p>Ekran dla twórcy i moderatora testu. Nie jest dostępny z nawigacji aplikacji. Odśwież stronę (F5), aby wrócić do stanu początkowego.</p>
+    <p>Ekran dla twórcy i moderatora testu. Nie jest dostępny z nawigacji aplikacji. Odśwież stronę (F5), aby wrócić do stanu początkowego. „Dzisiaj” w prototypie to ${nazwaDnia(DZIS)}.</p>
     <h2>Ekrany</h2>
     <ul>
-      <li><a href="#kalendarz">Kalendarz miesięczny</a> — start; po opłaceniu faktury pokazuje stan „po opłaceniu”</li>
-      ${dniZFakturami.map(d => {
-        const n = DANE.faktury.filter(f => f.dzien === d).length;
-        return `<li><a href="#dzien-${d}">Szczegóły dnia: ${d} ${MIESIACE_DOP[miesiac - 1]}</a> — ${n} ${odmianaFaktur(n)}${d < dzisDzien ? ', po terminie' : ''}</li>`;
+      ${miesiace.map(([r, m], i) => `<li><a href="#kalendarz-${kluczMies(r, m)}">Kalendarz: ${MIESIACE[m - 1]} ${r}</a>${i === 0 ? ' — start; faktury i zadania po terminie migają' : ''}</li>`).join('')}
+      ${dniFaktur.map(s => {
+        const k = DANE.faktury.filter(f => f.termin === s).length;
+        return `<li><a href="#dzien-${s}">Szczegóły dnia: ${dataSlownie(s)}</a> — ${k} ${odmianaFaktur(k)}${poTerminie(s) ? ', po terminie' : ''}</li>`;
       }).join('')}
-      ${dniZZadaniami.map(d => `<li><a href="#dzien-${d}">Szczegóły dnia: ${d} ${MIESIACE_DOP[miesiac - 1]}</a> — zadanie</li>`).join('')}
-      <li><a href="#dzien-${pustyDzien}">Szczegóły dnia bez wpisów (${pustyDzien} ${MIESIACE_DOP[miesiac - 1]})</a> — stan pusty</li>
-      <li><a href="#dodaj-zadanie">Dodawanie zadania</a> — formularz; zapisz z pustą nazwą, aby zobaczyć błąd walidacji</li>
-      <li><a href="#dodaj-zadanie-17">Dodawanie zadania z podpowiedzianym dniem (17 ${MIESIACE_DOP[miesiac - 1]})</a></li>
+      ${dniZadan.map(s => `<li><a href="#dzien-${s}">Szczegóły dnia: ${dataSlownie(s)}</a> — zadanie${poTerminie(s) ? ', po terminie' : ''}</li>`).join('')}
+      ${pustyDzien ? `<li><a href="#dzien-${pustyDzien}">Szczegóły dnia bez wpisów (${dataSlownie(pustyDzien)})</a> — stan pusty</li>` : ''}
+      <li><a href="#dodaj-zadanie">Dodawanie zadania</a> — zapisz z pustą nazwą, aby zobaczyć błąd walidacji</li>
+      <li><a href="#dodaj-zadanie-${iso(DZIS_R, DZIS_M, 17)}">Dodawanie zadania z podpowiedzianym dniem (17 ${MIESIACE_DOP[DZIS_M - 1]})</a></li>
+      ${przyklad ? `<li><a href="#przeplanuj-${przyklad[0]}-${przyklad[1]}">Przeplanowanie zadania (${dataSlownie(przyklad[1])})</a> — zapisz bez zmiany daty, aby zobaczyć błąd</li>` : ''}
     </ul>
     <h2>Scenariusze</h2>
-    <ol>${DANE.scenariusze.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
+    <ol>${DANE.scenariusze.map(t => `<li>${esc(t)}</li>`).join('')}</ol>
     <h2>Stan bieżący</h2>
     <p>Opłacone faktury: ${stan.oplacone.size} z ${DANE.faktury.length}. Zadania: ${stan.zadania.length}, zrobione terminy: ${stan.zrobione.size}.</p>
   </div>`;
@@ -630,17 +730,23 @@ document.getElementById('inbox-label').textContent = DANE.skrzynka;
 let pierwszyRender = true;
 function render() {
   const hash = location.hash.replace('#', '') || 'kalendarz';
-  let m;
-  let html;
-  const dzienOk = n => n >= 1 && n <= liczbaDni;
+  let m, html = null;
+
   if (hash === 'mapa') html = ekranMapa();
-  else if ((m = hash.match(/^dzien-(\d{1,2})$/)) && dzienOk(+m[1])) html = ekranDzien(+m[1]);
+  else if (hash === 'kalendarz') html = ekranKalendarz(DZIS_R, DZIS_M);
+  else if ((m = hash.match(/^kalendarz-(\d{4})-(\d{2})$/)) && +m[2] >= 1 && +m[2] <= 12) html = ekranKalendarz(+m[1], +m[2]);
+  else if ((m = hash.match(/^dzien-(.+)$/)) && poprawnaData(m[1])) html = ekranDzien(m[1]);
   else if (hash === 'dodaj-zadanie') html = ekranDodajZadanie(null);
-  else if ((m = hash.match(/^dodaj-zadanie-(\d{1,2})$/)) && dzienOk(+m[1])) html = ekranDodajZadanie(+m[1]);
-  else {
-    if (hash !== 'kalendarz') { history.replaceState(null, '', '#kalendarz'); }
-    html = ekranKalendarz();
+  else if ((m = hash.match(/^dodaj-zadanie-(.+)$/)) && poprawnaData(m[1])) html = ekranDodajZadanie(m[1]);
+  else if ((m = hash.match(/^przeplanuj-(\d+)-(.+)$/)) && poprawnaData(m[2])) {
+    const z = stan.zadania.find(x => x.id === +m[1]);
+    if (z && z.terminy.includes(m[2]) && !stan.zrobione.has(z.id + '|' + m[2])) html = ekranPrzeplanuj(z, m[2]);
   }
+  if (html === null) {               // nieznany adres → kalendarz bieżącego miesiąca
+    history.replaceState(null, '', '#kalendarz');
+    html = ekranKalendarz(DZIS_R, DZIS_M);
+  }
+
   app.innerHTML = html;
   const h1 = app.querySelector('h1');
   if (h1 && !pierwszyRender) h1.focus({ preventScroll: true });   // czytniki ekranu dowiadują się o zmianie ekranu
@@ -659,23 +765,38 @@ function pokazKomunikat(tekst, zCofnij) {
   toastTimer = setTimeout(() => { t.hidden = true; }, zCofnij ? 7000 : 4500);
 }
 
+/* Cofnij: opłacenie faktury, zrobienie zadania albo przeniesienie terminu */
 document.getElementById('toast-action').addEventListener('click', () => {
   const o = stan.ostatnio;
   if (!o) return;
-  if (o.typ === 'faktura') stan.oplacone.delete(o.klucz);
-  else stan.zrobione.delete(o.klucz);
+  let tekst;
+  if (o.typ === 'faktura') { stan.oplacone.delete(o.klucz); tekst = DANE.teksty.przywrocona; }
+  else if (o.typ === 'zadanie') { stan.zrobione.delete(o.klucz); tekst = DANE.teksty.przywrocone; }
+  else if (o.typ === 'przeniesienie') {
+    const z = stan.zadania.find(x => x.id === o.zadanie);
+    z.terminy = z.terminy.map(t => t === o.na ? o.z : t).sort();
+    tekst = `${DANE.teksty.cofnietoPrzeniesienie} zadania „${z.nazwa}”: ${dataSlownie(o.z)}.`;
+  }
   stan.ostatnio = null;
   render();
-  pokazKomunikat(o.typ === 'faktura' ? DANE.teksty.przywrocona : DANE.teksty.przywrocone, false);
+  pokazKomunikat(tekst, false);
 });
 
 /* Oznaczanie faktury / zadania z krótkim stanem ładowania */
 function oznacz(przycisk, zapisz, komunikat) {
   const wiersz = przycisk.closest('.invoice');
-  wiersz.querySelectorAll('button').forEach(b => b.disabled = true);
+  wiersz.querySelectorAll('button, a').forEach(b => { b.disabled = true; b.setAttribute('aria-disabled', 'true'); b.style.pointerEvents = 'none'; });
   przycisk.textContent = 'Zapisywanie…';
   wiersz.classList.add('is-leaving');
   setTimeout(() => { zapisz(); render(); pokazKomunikat(komunikat, true); }, 600);
+}
+
+/* Pokazanie / schowanie komunikatu błędu pola */
+function ustawBlad(pole, idBledu, tekst) {
+  const el = document.getElementById(idBledu);
+  pole.setAttribute('aria-invalid', tekst ? 'true' : 'false');
+  el.hidden = !tekst;
+  if (tekst && el.querySelector('span')) el.querySelector('span').textContent = tekst;
 }
 
 app.addEventListener('click', e => {
@@ -698,8 +819,7 @@ app.addEventListener('click', e => {
 
   if (e.target.closest('#dodaj-termin')) {
     const kontener = document.getElementById('terminy');
-    const nr = kontener.children.length + 1;
-    kontener.insertAdjacentHTML('beforeend', wierszTerminu('', true, nr));
+    kontener.insertAdjacentHTML('beforeend', wierszTerminu('', true, kontener.children.length + 1));
     kontener.lastElementChild.querySelector('input').focus();
     return;
   }
@@ -711,48 +831,69 @@ app.addEventListener('click', e => {
   }
 });
 
-/* Zapis formularza zadania (z walidacją) */
-app.addEventListener('submit', e => {
-  if (e.target.id !== 'form-zadanie') return;
-  e.preventDefault();
-  const form = e.target;
-  const pole = form.nazwa;
-  const nazwa = pole.value.trim();
-  const terminy = [...new Set([...form.querySelectorAll('input[name="termin"]')].map(i => i.value).filter(Boolean))].sort();
-
-  const bladNazwa = !nazwa;
-  const bladTermin = terminy.length === 0;
-  pole.setAttribute('aria-invalid', bladNazwa);
-  document.getElementById('blad-nazwa').hidden = !bladNazwa;
-  form.querySelectorAll('input[name="termin"]').forEach(i => i.setAttribute('aria-invalid', bladTermin));
-  document.getElementById('blad-termin').hidden = !bladTermin;
-  if (bladNazwa) { pole.focus(); return; }
-  if (bladTermin) { form.querySelector('input[name="termin"]').focus(); return; }
-
+/* Zapis formularzy (z walidacją) */
+function zapiszZKrotkimLadowaniem(form, akcja) {
   const przycisk = form.querySelector('[type="submit"]');
   przycisk.disabled = true;
   przycisk.textContent = 'Zapisywanie…';
-  setTimeout(() => {
-    stan.zadania.push({ id: stan.nastepneIdZadania++, nazwa, terminy });
-    const wTymMiesiacu = terminy.filter(t => t.startsWith(`${rok}-${pad(miesiac)}`)).length;
-    const inne = terminy.length - wTymMiesiacu;
-    let tekst = `Dodano zadanie „${nazwa}”: ${terminy.length} ${odmianaTerminow(terminy.length)}.`;
-    if (inne) tekst += ` W innych miesiącach: ${inne}.`;
-    location.replace('#kalendarz');   // formularz nie zostaje w historii „wstecz”; zmiana adresu odświeża ekran
-    pokazKomunikat(tekst, false);
-  }, 600);
+  setTimeout(akcja, 600);
+}
+
+app.addEventListener('submit', e => {
+  e.preventDefault();
+  const form = e.target;
+
+  if (form.id === 'form-zadanie') {
+    const pole = form.nazwa;
+    const nazwa = pole.value.trim();
+    const pola = [...form.querySelectorAll('input[name="termin"]')];
+    const terminy = [...new Set(pola.map(i => i.value).filter(poprawnaData))].sort();
+
+    ustawBlad(pole, 'blad-nazwa', nazwa ? '' : DANE.teksty.bladNazwa);
+    const bladT = terminy.length ? '' : DANE.teksty.bladTermin;
+    pola.forEach(i => i.setAttribute('aria-invalid', bladT ? 'true' : 'false'));
+    document.getElementById('blad-termin').hidden = !bladT;
+    if (!nazwa) { pole.focus(); return; }
+    if (bladT) { pola[0].focus(); return; }
+
+    zapiszZKrotkimLadowaniem(form, () => {
+      stan.zadania.push({ id: stan.nastepneIdZadania++, nazwa, terminy });
+      const lista = terminy.slice(0, 4).map(dataSlownie).join(', ') + (terminy.length > 4 ? '…' : '');
+      location.replace('#kalendarz-' + terminy[0].slice(0, 7));   // formularz nie zostaje w historii „wstecz”
+      pokazKomunikat(`Dodano zadanie „${nazwa}”: ${terminy.length} ${odmianaTerminow(terminy.length)} (${lista}).`, false);
+    });
+  }
+
+  if (form.id === 'form-przeplanuj') {
+    const z = stan.zadania.find(x => x.id === +form.dataset.zadanie);
+    const stary = form.dataset.termin;
+    const pole = form.nowy;
+    const nowy = pole.value;
+    let blad = '';
+    if (!poprawnaData(nowy)) blad = DANE.teksty.bladNowyTerminPusty;
+    else if (nowy === stary) blad = DANE.teksty.bladNowyTerminTenSam;
+    else if (poTerminie(nowy)) blad = DANE.teksty.bladNowyTerminPrzeszly;
+    else if (z.terminy.includes(nowy)) blad = DANE.teksty.bladNowyTerminZajety;
+    ustawBlad(pole, 'blad-nowy', blad);
+    if (blad) { pole.focus(); return; }
+
+    zapiszZKrotkimLadowaniem(form, () => {
+      z.terminy = z.terminy.map(t => t === stary ? nowy : t).sort();
+      stan.ostatnio = { typ: 'przeniesienie', zadanie: z.id, z: stary, na: nowy };
+      location.replace('#kalendarz-' + nowy.slice(0, 7));          // pokaż miesiąc z nowym terminem
+      pokazKomunikat(`Przeniesiono „${z.nazwa}” na ${dataSlownie(nowy)}.`, true);
+    });
+  }
 });
 
 /* Usuwanie komunikatu błędu, gdy użytkownik poprawia pole */
 app.addEventListener('input', e => {
-  if (e.target.id === 'nazwa' && e.target.value.trim()) {
-    e.target.setAttribute('aria-invalid', 'false');
-    document.getElementById('blad-nazwa').hidden = true;
-  }
+  if (e.target.id === 'nazwa' && e.target.value.trim()) ustawBlad(e.target, 'blad-nazwa', '');
   if (e.target.name === 'termin' && e.target.value) {
     document.querySelectorAll('input[name="termin"]').forEach(i => i.setAttribute('aria-invalid', 'false'));
     document.getElementById('blad-termin').hidden = true;
   }
+  if (e.target.id === 'nowy-termin' && e.target.value) ustawBlad(e.target, 'blad-nowy', '');
 });
 
 window.addEventListener('hashchange', render);
