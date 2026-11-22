@@ -71,9 +71,11 @@ Założenia z `docs/plan-testu.md`: przeplanowanie zadania i przejście do inneg
 Zalążek z briefu („Dane w prototypie”) uzupełniony o pola potrzebne do trwałego zapisu i integracji z pocztą.
 
 ### Użytkownik
+Konto w Supabase Auth (`auth.users`); dodatkowe pola w osobnej tabeli powiązanej z `auth.users.id`.
+
 | Pole | Typ | Uwagi |
 |---|---|---|
-| id | identyfikator | |
+| id | identyfikator | = `auth.users.id` |
 | email | tekst | login |
 | strefa_czasowa | tekst | wyznacza „dzisiaj” i to, co jest po terminie |
 
@@ -203,7 +205,18 @@ Wygląd zgodnie z `DESIGN.md` (ostre krawędzie, brak cieni, czerń jako kolor a
 
 ### 6.7 Logowanie i pierwsze uruchomienie
 
-Nowe względem prototypu: rejestracja / logowanie, podłączenie skrzynki, pierwsze pobranie faktur. Metoda logowania i zakres pierwszego importu (np. maile z ostatnich N dni) — **[DECYZJA]**.
+Nowe względem prototypu: logowanie, podłączenie skrzynki, pierwsze pobranie faktur.
+
+**Logowanie (zrobione, `app/`):**
+- Supabase Auth, adres e-mail + hasło.
+- Brak rejestracji w aplikacji: konta zakłada administrator w panelu Supabase (Authentication → Users → Add user, z zaznaczonym „Auto Confirm User”). Publiczna rejestracja jest wyłączona w ustawieniach Auth.
+- Ekran „Zaloguj się”: pola „Adres e-mail” i „Hasło” (z „Pokaż hasło”), przycisk „Zaloguj się” (podczas wysyłania „Logowanie…”).
+- Walidacja: „Wpisz adres e-mail.”, „Wpisz poprawny adres e-mail, np. imie@domena.pl.”, „Wpisz hasło.”
+- Błędy logowania: „Nieprawidłowy e-mail lub hasło.”, „Ten adres e-mail nie jest jeszcze potwierdzony.”, „Zbyt wiele prób logowania. Odczekaj chwilę i spróbuj ponownie.”, „Nie udało się połączyć z serwerem. Sprawdź połączenie z internetem i spróbuj ponownie.”
+- Sesja jest zapamiętywana w przeglądarce; w nagłówku adres e-mail i „Wyloguj się”.
+- Odzyskiwanie hasła — poza obecnym zakresem; hasło zmienia administrator w panelu Supabase.
+
+Zakres pierwszego importu maili (np. z ostatnich N dni) — **[DECYZJA]**.
 
 ## 7. Integracja z pocztą
 
@@ -226,7 +239,7 @@ Nowe względem prototypu: rejestracja / logowanie, podłączenie skrzynki, pierw
 - **Dostępność:** jak w prototypie — etykiety dni dla czytników ekranu (np. „12 listopada: 2 faktury do opłacenia, po terminie”), fokus na nagłówku po zmianie ekranu, komunikaty błędów powiązane z polami, respektowanie „ogranicz ruch”, kontrast zgodny z WCAG AA.
 - **Bezpieczeństwo:** tokeny dostępu do poczty szyfrowane, połączenia wyłącznie HTTPS, dostęp tylko do własnych danych.
 - **Język:** polski, z poprawną odmianą liczebników (1 faktura, 2 faktury, 5 faktur).
-- **Technologia:** **[DECYZJA]** (aplikacja webowa — stos, hosting, baza danych).
+- **Technologia:** backend, baza danych i logowanie — Supabase (projekt „Kreator”, region eu-central-1). Frontend na razie jako statyczna strona HTML/JS z biblioteką `@supabase/supabase-js` (`app/`, lokalnie uruchamiana przez `serwer.ps1`). Framework frontendu i hosting — **[DECYZJA]**.
 
 ## 9. Słownik pojęć w interfejsie
 
