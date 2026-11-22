@@ -143,11 +143,18 @@ Reguły pilnowane przez bazę:
 
 Reguła „zadanie ma co najmniej jeden termin” jest pilnowana w aplikacji, nie w bazie.
 
+Druga migracja (`20261122163009_skrzynka_imap_frazy.sql`) dodaje:
+- w `skrzynki`: `imap_host`, `imap_port`, `imap_login`, `haslo_secret_id` (niedostępne dla przeglądarki), `folder`, `dni_na_platnosc`, `ostatni_blad`, `ostatnio_nowych`; nowy status `niesprawdzona`; usunięcie skrzynki usuwa hasło z Vault;
+- tabelę `frazy` (`fraza`, unikalna dla użytkownika bez względu na wielkość liter) z RLS: odczyt, dodawanie, usuwanie tylko własnych;
+- funkcję `zapisz_skrzynke(...)` — jedyny sposób zapisu skrzynki i hasła przez użytkownika;
+- harmonogram `pobierz-faktury-co-15-min` (pg_cron + pg_net).
+
 **Dostęp (Row Level Security)** — zalogowany użytkownik widzi i zmienia wyłącznie wiersze ze swoim `uzytkownik_id`; użytkownik niezalogowany (`anon`) nie ma dostępu do żadnej tabeli.
 
 | Tabela | Użytkownik może |
 |---|---|
-| `skrzynki` | odczytać, usunąć (odłączyć) |
+| `skrzynki` | odczytać (bez `haslo_secret_id`), usunąć (odłączyć); dodać i zmienić tylko przez `zapisz_skrzynke` |
+| `frazy` | odczytać, dodać, usunąć |
 | `faktury` | odczytać, zmienić tylko `status` i `oplacona_kiedy` |
 | `zadania` | odczytać, dodać, zmienić `nazwa`, usunąć |
 | `terminy_zadan` | odczytać, dodać, zmienić `data`, `status`, `zrobione_kiedy`, usunąć |
@@ -229,9 +236,16 @@ Wygląd zgodnie z `DESIGN.md` (ostre krawędzie, brak cieni, czerń jako kolor a
 
 ### 6.6 Nagłówek aplikacji i skrzynka
 
-- Nagłówek pokazuje adres połączonej skrzynki. Po testach v2 — z wyraźną etykietą (np. „Faktury zbieramy z: <adres>”) i stanem synchronizacji (połączona / błąd).
-- Przy błędzie połączenia: komunikat z akcją „Połącz ponownie”.
-- Ekran ustawień skrzynki (podłączenie, odłączenie) — nowy względem prototypu.
+**Zrobione (`app/`, ekran `#skrzynka`):**
+- Nagłówek: link do ustawień skrzynki — „Skonfiguruj skrzynkę” (brak skrzynki), adres skrzynki na zielono (działa) albo „Błąd skrzynki” na czerwono; podpowiedź „Faktury zbieramy z tej skrzynki — kliknij, aby zmienić ustawienia”.
+- Kalendarz pokazuje baner: brak skrzynki → „Skonfiguruj skrzynkę pocztową…”; błąd → „Nie udało się sprawdzić skrzynki.” + treść błędu; brak fraz → „Dodaj frazy…”.
+- Ekran „Skrzynka pocztowa”:
+  - stan: adres, status (jeszcze nie sprawdzona / połączona / błąd połączenia), ostatnie sprawdzenie, liczba nowych faktur, treść błędu, przycisk „Sprawdź pocztę teraz”;
+  - **frazy w tytule maila**: lista z usuwaniem, pole „Nowa fraza” + „Dodaj frazę”, podpowiedzi (faktura, rachunek, do zapłaty, e-faktura). Fraza 2–100 znaków, bez duplikatów (bez względu na wielkość liter);
+  - **połączenie IMAP**: wybór poczty (Gmail, Outlook / Hotmail, WP, Onet, Interia, o2, iCloud, Inny — wypełnia serwer i port), adres skrzynki, serwer IMAP, port, login (domyślnie = adres), hasło aplikacji (z podpowiedzią dla danej poczty; przy edycji puste = bez zmiany), folder (INBOX), dni na zapłatę (0–120, domyślnie 14);
+  - „Połącz i sprawdź pocztę” / „Zapisz i sprawdź pocztę” — zapisuje i od razu sprawdza skrzynkę;
+  - „Odłącz skrzynkę” (z potwierdzeniem) — usuwa skrzynkę i hasło; pobrane faktury zostają.
+- Przycisk „Pokaż maila” z prototypu nie jest jeszcze zrobiony.
 
 ### 6.7 Logowanie i pierwsze uruchomienie
 
@@ -246,21 +260,33 @@ Nowe względem prototypu: logowanie, podłączenie skrzynki, pierwsze pobranie f
 - Sesja jest zapamiętywana w przeglądarce; w nagłówku adres e-mail i „Wyloguj się”.
 - Odzyskiwanie hasła — poza obecnym zakresem; hasło zmienia administrator w panelu Supabase.
 
-Zakres pierwszego importu maili (np. z ostatnich N dni) — **[DECYZJA]**.
+Pierwszy import: maile z ostatnich 30 dni (patrz 7).
 
 ## 7. Integracja z pocztą
 
-- Aplikacja okresowo pobiera nowe wiadomości z połączonej skrzynki i rozpoznaje maile z fakturami.
-- Z każdej faktury wyciąga: dostawcę, e-mail nadawcy, krótki opis, kwotę, termin płatności.
-- Jedna wiadomość = najwyżej jedna faktura (deduplikacja po `wiadomosc_id`).
+**Decyzje (2026-11-22):** IMAP z hasłem aplikacji; faktura = mail, którego **tytuł** zawiera frazę użytkownika; termin płatności szukany w treści, a gdy go nie ma — data maila + N dni; sprawdzanie automatyczne co 15 minut i przyciskiem.
+
+**Jak to działa (zrobione):**
+- Edge Function `pobierz-faktury` (`supabase/functions/pobierz-faktury/`), biblioteki `imapflow` (IMAP) i `postal-mime` (treść maila).
+- Wywołanie z aplikacji („Sprawdź pocztę teraz”, token użytkownika) → tylko skrzynka tego użytkownika; z harmonogramu `pg_cron` co 15 min (nagłówek `x-cron-sekret` porównywany z sekretem w Vault) → wszystkie skrzynki.
+- Hasło IMAP przechowywane zaszyfrowane w Supabase Vault; zapisuje je tylko funkcja `zapisz_skrzynke` (dla skrzynki zalogowanego użytkownika). Przeglądarka nie może odczytać ani hasła, ani identyfikatora sekretu.
+- Zakres maili: pierwsze sprawdzenie — ostatnie 30 dni; kolejne — od ostatniej synchronizacji minus 2 dni. Najwyżej 40 nowych faktur na jedno sprawdzenie (reszta przy następnym).
+- **Dopasowanie:** tytuł zawiera co najmniej jedną frazę; bez względu na wielkość liter i polskie znaki („faktura” pasuje do „FAKTURA”, „do zapłaty” do „Do zaplaty”).
+- **Dane faktury:**
+  - dostawca — nazwa nadawcy maila; gdy jej brak, domena adresu (faktury@gazovia.pl → „Gazovia”);
+  - e-mail nadawcy — adres nadawcy; opis — tytuł maila;
+  - termin płatności — data po słowach „termin płatności”, „termin zapłaty”, „płatne do”, „zapłać do”, „wpłać do” itp. (formaty 15.12.2026, 15-12-2026, 15/12/2026, 2026-12-15, 15 grudnia 2026), tylko w zakresie od 31 dni przed do 365 dni po dacie maila; gdy brak — data maila (strefa Europe/Warsaw) + „dni na zapłatę”;
+  - kwota — liczba z „zł”/„PLN” po słowach „do zapłaty”, „kwota”, „razem”, „brutto” itp.; gdy brak — pole puste.
+- Jedna wiadomość = najwyżej jedna faktura (`wiadomosc_id` = Message-ID maila).
+- Po sprawdzeniu skrzynka ma status `polaczona` albo `blad` z komunikatem po polsku (złe hasło, nieznany serwer, brak odpowiedzi, brak folderu, brak fraz).
 - Faktury pojawiają się w kalendarzu dopiero po nadejściu maila — przyszłe miesiące są puste, dopóki faktury nie przyjdą (baner z 6.1).
-- **[DECYZJA]** Pozostaje do ustalenia:
-  - dostawcy poczty (Gmail API, Microsoft Graph, IMAP) i sposób autoryzacji (OAuth, hasło aplikacji),
-  - jak rozpoznawać faktury (reguły, model językowy, odczyt załącznika PDF),
-  - co, jeśli nie da się ustalić terminu płatności (np. data maila + 14 dni z oznaczeniem do sprawdzenia albo osobna lista „do uzupełnienia”),
-  - czy użytkownik może poprawić rozpoznane dane albo odrzucić mail, który nie jest fakturą,
-  - częstotliwość synchronizacji.
-- Dane z poczty są danymi osobowymi: aplikacja pobiera tylko to, co potrzebne, umożliwia odłączenie skrzynki i usunięcie danych (RODO).
+
+**Nadal otwarte — [DECYZJA]:**
+- odczyt załączników PDF (dziś czytana jest tylko treść maila),
+- poprawianie rozpoznanych danych (termin, kwota, dostawca) i odrzucanie maila, który nie jest fakturą,
+- oznaczenie faktur, w których termin nie został znaleziony w treści (dziś nie są wyróżnione).
+
+Dane z poczty są danymi osobowymi: aplikacja pobiera tylko maile pasujące do fraz, umożliwia odłączenie skrzynki (usuwa hasło) i usunięcie danych (RODO).
 
 ## 8. Wymagania niefunkcjonalne
 
