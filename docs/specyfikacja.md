@@ -124,6 +124,36 @@ Reguły:
 - „Jednorazowe” zadanie to zadanie z jednym terminem; z kilkoma — „harmonogram”.
 - Przeplanowanie zmienia datę jednego Terminu; pozostałe terminy zadania się nie zmieniają.
 
+### 5.1 Baza danych (Supabase, zrobione)
+
+Migracja: `supabase/migrations/20261122160151_schemat_kalendarza.sql`. Tabele w schemacie `public`: `skrzynki`, `faktury`, `zadania`, `terminy_zadan`. Statusy zapisane bez polskich znaków: `polaczona` / `blad` / `odlaczona`, `do_oplacenia` / `oplacona`, `do_zrobienia` / `zrobione`.
+
+Różnice względem tabel powyżej:
+- Każda tabela ma `uzytkownik_id` (domyślnie `auth.uid()`), także `terminy_zadan`, żeby reguła dostępu była prosta i szybka.
+- Kwota jako `kwota_grosze` (opcjonalna) + `waluta` (domyślnie PLN). Pole można zostawić puste, dopóki decyzja o kwocie nie zapadnie.
+- `zrobione_kiedy` w terminach zadań (analogicznie do `oplacona_kiedy`).
+- Tabela z dodatkowymi polami użytkownika (np. `strefa_czasowa`) jeszcze nie istnieje.
+
+Reguły pilnowane przez bazę:
+- jedna skrzynka na użytkownika; jedna faktura na wiadomość (`uzytkownik_id`, `wiadomosc_id`),
+- zadanie nie ma dwóch terminów w tym samym dniu; usunięcie zadania usuwa jego terminy,
+- faktura może wskazywać tylko skrzynkę, a termin tylko zadanie tego samego użytkownika,
+- `status = oplacona` ⇔ wypełnione `oplacona_kiedy`; `status = zrobione` ⇔ wypełnione `zrobione_kiedy`,
+- nazwa zadania nie może być pusta.
+
+Reguła „zadanie ma co najmniej jeden termin” jest pilnowana w aplikacji, nie w bazie.
+
+**Dostęp (Row Level Security)** — zalogowany użytkownik widzi i zmienia wyłącznie wiersze ze swoim `uzytkownik_id`; użytkownik niezalogowany (`anon`) nie ma dostępu do żadnej tabeli.
+
+| Tabela | Użytkownik może |
+|---|---|
+| `skrzynki` | odczytać, usunąć (odłączyć) |
+| `faktury` | odczytać, zmienić tylko `status` i `oplacona_kiedy` |
+| `zadania` | odczytać, dodać, zmienić `nazwa`, usunąć |
+| `terminy_zadan` | odczytać, dodać, zmienić `data`, `status`, `zrobione_kiedy`, usunąć |
+
+Skrzynki i faktury dodaje serwer synchronizujący pocztę (klucz `service_role`, który omija RLS — nigdy w przeglądarce). Tokenów dostępu do poczty nie przechowujemy w tych tabelach — miejsce ich przechowywania **[DECYZJA]** razem z integracją pocztową (sekcja 7).
+
 ## 6. Ekrany i zachowanie
 
 Wygląd zgodnie z `DESIGN.md` (ostre krawędzie, brak cieni, czerń jako kolor akcentowy, kolory tylko dla statusów). Teksty interfejsu poniżej pochodzą z prototypu v3.
